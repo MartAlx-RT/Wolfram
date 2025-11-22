@@ -7,14 +7,16 @@ CC = g++
 
 all: main
 
-main: TreeDump.o main.o Input.o
-	$(CC) $(linker_flags) TreeDump.o main.o Input.o
+main: TreeDump.o main.o Input.o Derivative.o
+	$(CC) $(linker_flags) TreeDump.o main.o Input.o Derivative.o
 
 TreeDump.o: TreeDump.c
 
 main.o: main.c
 
 Input.o: Input.c
+
+Derivative.o: Derivative.c
 
 clean:
 	rm *.o

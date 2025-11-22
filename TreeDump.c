@@ -1,6 +1,6 @@
 #include "Tree.h"
 
-static void PrintNodeData(node_t *node, FILE *out_file)
+static void PrintNodeData(const node_t *node, FILE *out_file)
 {
 	assert(node);
 	assert(out_file);
@@ -33,6 +33,61 @@ static void PrintNodeData(node_t *node, FILE *out_file)
 	}
 }
 
+static void PrintNodeDataTex(const node_t *node, FILE *out_file)
+{
+	assert(node);
+	assert(out_file);
+
+	switch(node->op_type)
+	{
+	case OP_ARIFM:
+		switch(node->op_val.arifm)
+		{
+		case AR_ADD:
+			fprintf(out_file, "+");
+			break;
+		case AR_SUB:
+			fprintf(out_file, "-");
+			break;
+		case AR_MUL:
+			fprintf(out_file, "\\cdot ");
+			break;
+		case AR_DIV:
+			fprintf(out_file, "\\over ");
+			break;
+		case AR_POW:
+			fprintf(out_file, "^");
+			break;
+		default:
+			fprintf(out_file, "???");
+			break;
+		}
+		
+		break;
+	
+	case OP_ELFUNC:
+		if(node->op_val.elfunc < N_ELFUNC)
+			fprintf(out_file, "%s", ELFUNC_NAME[node->op_val.elfunc]);
+		else
+			fprintf(out_file, "???");
+		break;
+
+	case OP_VAR:
+		fprintf(out_file, "%c", node->op_val.var);
+		break;
+	
+	case OP_NUM:
+		fprintf(out_file, "%lg", node->op_val.num);
+		break;
+	
+	case N_OP:
+	default:
+		fprintf(out_file, "?");
+		break;
+	}
+}
+
+/*
 tree_err_t PrintTree(node_t *node, FILE *dump_file, const traversal_type_t traversal_type)
 {
     static size_t call_count = 0;
@@ -78,13 +133,12 @@ tree_err_t PrintTree(node_t *node, FILE *dump_file, const traversal_type_t trave
 
     return err;
 }
+*/
 
-tree_err_t PrintDiagraphNode(node_t *node, FILE *dot_file)
+static tree_err_t _PrintDigraphNode(const node_t *node, FILE *dot_file, size_t *call_count)
 {
-	static size_t call_count = 0;
-
-	//printf("count = %lu\n", call_count);
-	if (call_count++ > MAX_REC_DEPTH)
+	assert(call_count);
+	if ((*call_count)++ > MAX_REC_DEPTH)
 		return T_LOOP;
 
     if (node == NULL)
@@ -122,7 +176,7 @@ tree_err_t PrintDiagraphNode(node_t *node, FILE *dot_file)
 		else
 			fprintf(dot_file, "label%lu->label%lu [color=red]\n", (size_t)node, (size_t)node->left);
 		
-		err = PrintDiagraphNode(node->left, dot_file);
+		err = _PrintDigraphNode(node->left, dot_file, call_count);
 	}
 
 	TREE_OK_OR_LEAVE(err);
@@ -134,13 +188,19 @@ tree_err_t PrintDiagraphNode(node_t *node, FILE *dot_file)
 		else
 			fprintf(dot_file, "label%lu->label%lu [color=red]\n", (size_t)node, (size_t)node->right);
 		
-		err = PrintDiagraphNode(node->right, dot_file);
+		err = _PrintDigraphNode(node->right, dot_file, call_count);
 	}
 
 	return err;
 }
 
-tree_err_t CreateDigraph(node_t *node, const char *dot_file_path)
+static tree_err_t PrintDigraphNode(const node_t *node, FILE *dot_file)
+{
+	size_t call_count = 0;
+	return _PrintDigraphNode(node, dot_file, &call_count);
+}
+
+static tree_err_t CreateDigraph(const node_t *node, const char *dot_file_path)
 {
     if(node == NULL)
         return T_NODE_NULLPTR;
@@ -155,7 +215,7 @@ tree_err_t CreateDigraph(node_t *node, const char *dot_file_path)
     }
 
     fprintf(dot_file, "digraph Tree\n{\n");
-	tree_err_t err = PrintDiagraphNode(node, dot_file);
+	tree_err_t err = PrintDigraphNode(node, dot_file);
 	
 	
 
@@ -164,7 +224,7 @@ tree_err_t CreateDigraph(node_t *node, const char *dot_file_path)
 	return err;
 }
 
-tree_err_t TreeDumpHTML(node_t *node, const char *dot_file_path, const char *img_dir_path, const char *html_file_path, const char *caption)
+tree_err_t TreeDumpHTML(const node_t *node, const char *dot_file_path, const char *img_dir_path, const char *html_file_path, const char *caption)
 {
 	if(node == NULL)
         return T_NODE_NULLPTR;
@@ -172,26 +232,23 @@ tree_err_t TreeDumpHTML(node_t *node, const char *dot_file_path, const char *img
 	if(dot_file_path == NULL || html_file_path == NULL || img_dir_path == NULL || caption == NULL)
 		return T_FILE_NULLPTR;
 
-	static size_t dump_call_counter = 0;
+	static size_t call_count = 0;
 
     FILE *html_file = NULL;
 
-    if(dump_call_counter == 0)
+    if(call_count == 0)
     {
         html_file = fopen(html_file_path, "w");
         fclose(html_file);
     }
 
-    html_file = fopen(html_file_path, "a");
-    if(html_file == NULL)
-	{
-		printf("file(s) cannot be open\n");
-	}
-	
-    tree_err_t err = CreateDigraph(node, dot_file_path);
+    html_file = fopen(html_file_path, "a+");
+	assert(html_file);
+
+	tree_err_t err = CreateDigraph(node, dot_file_path);
 
     char system_msg[100] = "";
-    snprintf(system_msg, 100, "dot %s -Tsvg -o %s/%lu.svg\n", dot_file_path, img_dir_path, dump_call_counter);
+    snprintf(system_msg, 100, "dot %s -Tsvg -o %s/%lu.svg\n", dot_file_path, img_dir_path, call_count);
     //printf("sys_msg = {%s}\n", system_msg);
     if(system(system_msg))
 	{
@@ -201,13 +258,145 @@ tree_err_t TreeDumpHTML(node_t *node, const char *dot_file_path, const char *img
 
 	fprintf(html_file, "<pre>\n\t<h2>%s</h2>\n", caption);
 
-    fprintf(html_file, "\t<img  src=\"%s/%lu.svg\" alt=\"%s\" width=\"1200px\"/>\n", img_dir_path,dump_call_counter, caption);
+    fprintf(html_file, "\t<img  src=\"%s/%lu.svg\" alt=\"%s\" width=\"1200px\"/>\n", img_dir_path, call_count, caption);
 
     fprintf(html_file, "\t<hr>\n</pre>\n\n");
     fclose(html_file);
 
-    dump_call_counter++;
+    call_count++;
 
     return err;
 }
 
+static tree_err_t PrintTexNode(const node_t *node, FILE *tex_file, size_t *call_count)
+{
+	assert(call_count);
+	
+	if(node == NULL)
+		return T_NODE_NULLPTR;
+		
+	if(tex_file == NULL)
+		return T_FILE_NULLPTR;
+	
+	if(node->parent == NULL)
+		return T_PARENT_NULLPTR;
+
+	if((*call_count)++ > MAX_REC_DEPTH)
+		return T_LOOP;
+	/*----------------------------*/
+
+	tree_err_t err = T_NO_ERR;
+	
+	int par_is_open = 0;
+	int f_par_is_open = 0;
+
+	fprintf(tex_file, "{");
+
+	fprintf(tex_file, "{");
+	if(node->left)
+	{
+		if(node->op_type == OP_ARIFM && (node->op_val.arifm == AR_MUL || node->op_val.arifm == AR_POW) &&
+		   node->left->op_type == OP_ARIFM	&& node->left->op_val.arifm != AR_MUL)
+		{
+			fprintf(tex_file, "\\left(");
+			par_is_open = 1;
+		}
+
+		err = PrintTexNode(node->left, tex_file, call_count);
+	}
+	
+	if(par_is_open)
+	{
+		fprintf(tex_file, "\\right)");
+		par_is_open = 0;
+	}
+	fprintf(tex_file, "}");
+	
+
+	PrintNodeDataTex(node, tex_file);
+	if(node->op_type == OP_ELFUNC)
+	{
+		fprintf(tex_file, "\\left(");
+		f_par_is_open = 1;
+	}
+
+	fprintf(tex_file, "{");
+	if(node->right)
+	{
+		if(node->op_type == OP_ARIFM && node->op_val.arifm == AR_MUL &&
+		   node->right->op_type == OP_ARIFM	&& node->right->op_val.arifm != AR_MUL)
+		{
+			fprintf(tex_file, "\\left(");
+			par_is_open = 1;
+		}
+
+		if(err)
+			PrintTexNode(node->right, tex_file, call_count);
+		else
+			err = PrintTexNode(node->right, tex_file, call_count);
+	}
+	
+	
+	if(par_is_open)
+	{
+		fprintf(tex_file, "\\right)");
+		par_is_open = 0;
+	}
+
+	fprintf(tex_file, "}");
+	
+	if(f_par_is_open)
+	{
+		fprintf(tex_file, "\\right)");
+		f_par_is_open = 0;
+	}
+
+	fprintf(tex_file, "}");
+	return err;
+}
+
+tree_err_t PrintTexTree(const node_t *tree, FILE *tex_file)
+{
+	fprintf(tex_file, "\\begin{equation}\n");
+	
+	size_t call_count = 0;
+	tree_err_t err = PrintTexNode(tree, tex_file, &call_count);
+
+	fprintf(tex_file, "\\end{equation}\n");
+	return err;
+}
+
+FILE *OpenTex(const char *tex_file_path)
+{
+	if(tex_file_path == NULL)
+		return NULL;
+
+	FILE *tex_file = fopen(tex_file_path, "w");
+	assert(tex_file);
+
+	fprintf(tex_file,
+			"\\documentclass[a4paper]{article}\n"
+			"\n"
+			"\\usepackage{float}\n"
+			"\\usepackage{multirow}\n"
+			"\\usepackage[utf8]{inputenc}\n"
+			"\\usepackage[T2A]{fontenc}\n"
+			"\\usepackage[english,russian]{babel}\n"
+			"\\usepackage{graphicx}\n"
+			"\\usepackage{amsmath}\n"
+			"\\usepackage[left=2cm, top=2cm, right=2cm, bottom=2cm]{geometry}\n"
+			"\\usepackage{wrapfig}\n\n\n"
+			"\\begin{document}\n\n");
+
+	return tex_file;
+}
+
+int CloseTex(FILE *tex_file)
+{
+	if(tex_file == NULL)
+		return 1;
+
+	fprintf(tex_file, "\n\\end{document}\n");
+	
+	return fclose(tex_file);
+}

@@ -119,7 +119,14 @@ static const size_t MAX_REC_DEPTH = 100;
 
 /*-----------------------------------------------*/
 
-tree_err_t TreeDumpHTML(node_t *node, const char *dot_file_path, const char *img_dir_path, const char *html_file_path, const char *caption);
+tree_err_t TreeDumpHTML(const node_t *node, const char *dot_file_path, const char *img_dir_path, const char *html_file_path, const char *caption);
 long ReadFileToBuf(const char *file_path, char **buf);
 char *ReadNode(char *curs, node_t *node);
 tree_err_t TreeDestroy(node_t *tree);
+node_t *TreeCopy(const node_t *tree);
+node_t *Deriv(const node_t *node, const char d_var);
+
+FILE *OpenTex(const char *tex_file_path);
+int CloseTex(FILE *tex_file);
+tree_err_t PrintTexTree(const node_t *tree, FILE *tex_file);
+

@@ -1,5 +1,8 @@
 #include "Tree.h"
 
+
+// (*(x(nil)(nil))(+(arth(y(nil)(nil))(nil))(6(nil)(nil))))
+
 int main(void)
 {
 	int status = 0;
@@ -16,8 +19,20 @@ int main(void)
 	if(ReadNode(buf, tree) == NULL)
 		status = 1;
 
+	FILE *tex_file = OpenTex("f.tex");
+	
+	PrintTexTree(tree, tex_file);
 	TreeDumpHTML(tree, "f.dot", "./Img", "f.html", "Test");
+	
+	node_t *d_tree = Deriv(tree, 'x');
+	d_tree->parent = d_tree;
+	PrintTexTree(d_tree, tex_file);
+	TreeDumpHTML(d_tree, "f.dot", "./Img", "f.html", "D(tree)");
+
+	CloseTex(tex_file);
 
 	TreeDestroy(tree);
+	TreeDestroy(d_tree);
+	free(buf);
 	return status;
 }
