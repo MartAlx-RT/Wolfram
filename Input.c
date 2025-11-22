@@ -105,8 +105,8 @@ char *ReadNode(char *curs, node_t *node)
 			if(strncmp(curs, ELFUNC_NAME[i], strlen(ELFUNC_NAME[i])) == 0)
 			{
 				curs += strlen(ELFUNC_NAME[i]);
-				node->op_type = OP_ELFUNC;
-				node->op_val.elfunc = (elfunc_t)i;
+				node->op.type = OP_ELFUNC;
+				node->op.val.elfunc = (elfunc_t)i;
 				/* ... */
 			}
 		}
@@ -114,23 +114,23 @@ char *ReadNode(char *curs, node_t *node)
 		if(curs[-1] != '('); 																/* if elfunc found */
 		else if ('A' <= *curs && *curs <= 'z')												/* case variable */
 		{
-			node->op_type = OP_VAR;
-			node->op_val.var = *curs++;
+			node->op.type = OP_VAR;
+			node->op.val.var = *curs++;
 			/* ... */
 		}
 		else if('0' <= *curs && *curs <= '9' || curs[0] == '-' && curs[1] != '(')			/* case number */
 		{
 			int offset = 0;
-			node->op_type = OP_NUM;
+			node->op.type = OP_NUM;
 			
-			sscanf(curs, "%lf%n", &(node->op_val.num), &offset);
+			sscanf(curs, "%lf%n", &(node->op.val.num), &offset);
 			curs += (size_t)offset;
 			/* ... */
 		}
 		else if(*curs == '-' || *curs == '+' || *curs == '*' || *curs == '/' || *curs == '^') /* case arifmetic */
 		{
-			node->op_type = OP_ARIFM;
-			node->op_val.arifm = (arifm_t)*curs;
+			node->op.type = OP_ARIFM;
+			node->op.val.arifm = (arifm_t)*curs;
 			curs++;
 			/* ... */
 		}

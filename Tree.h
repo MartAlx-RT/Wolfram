@@ -88,12 +88,17 @@ typedef union op_val_t
 	elfunc_t elfunc;
 } op_val_t;
 
+typedef struct op_t
+{
+	op_type_t type;
+	op_val_t val;
+} op_t;
+
 typedef struct node_t
 {
-	op_type_t op_type;
-	op_val_t op_val;
+	op_t op;
 
-	node_t *parent, *left, *right;
+	struct node_t *parent, *left, *right;
 } node_t;
 
 

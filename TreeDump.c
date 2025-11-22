@@ -5,25 +5,25 @@ static void PrintNodeData(const node_t *node, FILE *out_file)
 	assert(node);
 	assert(out_file);
 
-	switch(node->op_type)
+	switch(node->op.type)
 	{
 	case OP_ARIFM:
-		fprintf(out_file, "%c", (char)node->op_val.arifm);
+		fprintf(out_file, "%c", (char)node->op.val.arifm);
 		break;
 	
 	case OP_ELFUNC:
-		if(node->op_val.elfunc < N_ELFUNC)
-			fprintf(out_file, "%s", ELFUNC_NAME[node->op_val.elfunc]);
+		if(node->op.val.elfunc < N_ELFUNC)
+			fprintf(out_file, "%s", ELFUNC_NAME[node->op.val.elfunc]);
 		else
 			fprintf(out_file, "???");
 		break;
 
 	case OP_VAR:
-		fprintf(out_file, "%c", node->op_val.var);
+		fprintf(out_file, "%c", node->op.val.var);
 		break;
 	
 	case OP_NUM:
-		fprintf(out_file, "%lg", node->op_val.num);
+		fprintf(out_file, "%lg", node->op.val.num);
 		break;
 	
 	case N_OP:
@@ -38,10 +38,10 @@ static void PrintNodeDataTex(const node_t *node, FILE *out_file)
 	assert(node);
 	assert(out_file);
 
-	switch(node->op_type)
+	switch(node->op.type)
 	{
 	case OP_ARIFM:
-		switch(node->op_val.arifm)
+		switch(node->op.val.arifm)
 		{
 		case AR_ADD:
 			fprintf(out_file, "+");
@@ -66,18 +66,18 @@ static void PrintNodeDataTex(const node_t *node, FILE *out_file)
 		break;
 	
 	case OP_ELFUNC:
-		if(node->op_val.elfunc < N_ELFUNC)
-			fprintf(out_file, "%s", ELFUNC_NAME[node->op_val.elfunc]);
+		if(node->op.val.elfunc < N_ELFUNC)
+			fprintf(out_file, "%s", ELFUNC_NAME[node->op.val.elfunc]);
 		else
 			fprintf(out_file, "???");
 		break;
 
 	case OP_VAR:
-		fprintf(out_file, "%c", node->op_val.var);
+		fprintf(out_file, "%c", node->op.val.var);
 		break;
 	
 	case OP_NUM:
-		fprintf(out_file, "%lg", node->op_val.num);
+		fprintf(out_file, "%lg", node->op.val.num);
 		break;
 	
 	case N_OP:
@@ -158,10 +158,10 @@ static tree_err_t _PrintDigraphNode(const node_t *node, FILE *dot_file, size_t *
 
     tree_err_t err = T_NO_ERR;
 
-	assert(node->op_type < N_OP);
+	assert(node->op.type < N_OP);
 	fprintf(dot_file, "label%lu[shape=record, style=\"rounded, filled\", fillcolor=\"#a8daf0ff\", "
 					  "label=\"{ node[%p] | type = %s | val = ",
-			(size_t)node, node, OP_TYPE_NAME[node->op_type]);
+			(size_t)node, node, OP_TYPE_NAME[node->op.type]);
 	
 	PrintNodeData(node, dot_file);
 
@@ -295,8 +295,8 @@ static tree_err_t PrintTexNode(const node_t *node, FILE *tex_file, size_t *call_
 	fprintf(tex_file, "{");
 	if(node->left)
 	{
-		if(node->op_type == OP_ARIFM && (node->op_val.arifm == AR_MUL || node->op_val.arifm == AR_POW) &&
-		   node->left->op_type == OP_ARIFM	&& node->left->op_val.arifm != AR_MUL)
+		if(node->op.type == OP_ARIFM && (node->op.val.arifm == AR_MUL || node->op.val.arifm == AR_POW) &&
+		   node->left->op.type == OP_ARIFM	&& node->left->op.val.arifm != AR_MUL)
 		{
 			fprintf(tex_file, "\\left(");
 			par_is_open = 1;
@@ -314,7 +314,7 @@ static tree_err_t PrintTexNode(const node_t *node, FILE *tex_file, size_t *call_
 	
 
 	PrintNodeDataTex(node, tex_file);
-	if(node->op_type == OP_ELFUNC)
+	if(node->op.type == OP_ELFUNC)
 	{
 		fprintf(tex_file, "\\left(");
 		f_par_is_open = 1;
@@ -323,8 +323,8 @@ static tree_err_t PrintTexNode(const node_t *node, FILE *tex_file, size_t *call_
 	fprintf(tex_file, "{");
 	if(node->right)
 	{
-		if(node->op_type == OP_ARIFM && node->op_val.arifm == AR_MUL &&
-		   node->right->op_type == OP_ARIFM	&& node->right->op_val.arifm != AR_MUL)
+		if(node->op.type == OP_ARIFM && node->op.val.arifm == AR_MUL &&
+		   node->right->op.type == OP_ARIFM	&& node->right->op.val.arifm != AR_MUL)
 		{
 			fprintf(tex_file, "\\left(");
 			par_is_open = 1;

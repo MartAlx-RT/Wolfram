@@ -12,8 +12,8 @@ static node_t *_TreeCopy(const node_t *tree, size_t *call_count)
 	
 	node_t *new_node = (node_t *)calloc(1, sizeof(node_t));
 	
-	new_node->op_type = tree->op_type;
-	new_node->op_val = tree->op_val;
+	new_node->op.type = tree->op.type;
+	new_node->op.val = tree->op.val;
 	
 	if(tree->left)
 	{
@@ -58,19 +58,21 @@ static node_t *_FindNode(node_t *tree, tree_elem_t elem, int (*comp)(const tree_
 }
 */
 
-node_t *NewNode(const op_type_t op_type, const op_val_t op_val, node_t *left, node_t *right)
+node_t *NewNode(const op_t op, node_t *left, node_t *right)
 {
-	if(op_type >= N_OP)
+	if(op.type >= N_OP)
 		return NULL;
 
 	node_t *new_node = (node_t *)calloc(1, sizeof(node_t));
 	assert(new_node);
 
-	new_node->op_type = op_type;
-	new_node->op_val = op_val;
+	// new_node->op.type = op.type;
+	// new_node->op.val = op.val;
+	new_node->op = op;
+
 	new_node->left = left;
 
-	//printf("op_type = %d, op_val = %d\n", op_type, op_val);
+	//printf("op.type = %d, op.val = %d\n", op.type, op.val);
 
 	if(left)
 		new_node->left->parent = new_node;
@@ -89,30 +91,30 @@ node_t *Deriv(const node_t *node, const char d_var)
 	
 	node_t *d_node = NULL;
 	
-	if(node->op_type == OP_NUM)
+	if(node->op.type == OP_NUM)
 	{
 		d_node = (node_t *)calloc(1, sizeof(node_t));
 		
-		d_node->op_type = OP_NUM;
-		d_node->op_val.num = 0;
+		d_node->op.type = OP_NUM;
+		d_node->op.val.num = 0;
 	}
-	else if(node->op_type == OP_VAR)
+	else if(node->op.type == OP_VAR)
 	{
 		d_node = (node_t *)calloc(1, sizeof(node_t));
 		
-		d_node->op_type = OP_NUM;
-		d_node->op_val.num = (node->op_val.var == d_var) ? 1 : 0;
+		d_node->op.type = OP_NUM;
+		d_node->op.val.num = (node->op.val.var == d_var) ? 1 : 0;
 	}
-	else if(node->op_type == OP_ARIFM)
+	else if(node->op.type == OP_ARIFM)
 	{
-		switch (node->op_val.arifm)
+		switch (node->op.val.arifm)
 		{
 		case AR_ADD:
 		case AR_SUB:
 			d_node = (node_t *)calloc(1, sizeof(node_t));
 			
-			d_node->op_type = OP_ARIFM;
-			d_node->op_val = node->op_val;
+			d_node->op.type = OP_ARIFM;
+			d_node->op.val = node->op.val;
 			d_node->left = dL;
 			d_node->right = dR;
 			
@@ -134,7 +136,7 @@ node_t *Deriv(const node_t *node, const char d_var)
 			return ADD_(MUL_(dL, cR), MUL_(cL, dR));
 		
 		case AR_DIV:
-			return DIV_(SUB_(MUL_(cR, dL), MUL_(cL, dR)), POW_(cR, NewNode(OP_NUM, (const op_val_t){.num = 2}, NULL, NULL)));
+			return DIV_(SUB_(MUL_(cR, dL), MUL_(cL, dR)), POW_(cR, NewNode((const op_t){.type = OP_NUM, .val.num = 2}, NULL, NULL)));
 		
 		case AR_POW:
 			break;
