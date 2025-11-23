@@ -135,3 +135,4 @@ FILE *OpenTex(const char *tex_file_path);
 int CloseTex(FILE *tex_file);
 tree_err_t PrintTexTree(const node_t *tree, FILE *tex_file);
 
+node_t *FindNode(node_t *tree, const op_t op);

@@ -295,8 +295,14 @@ static tree_err_t PrintTexNode(const node_t *node, FILE *tex_file, size_t *call_
 	fprintf(tex_file, "{");
 	if(node->left)
 	{
-		if(node->op.type == OP_ARIFM && (node->op.val.arifm == AR_MUL || node->op.val.arifm == AR_POW) &&
-		   node->left->op.type == OP_ARIFM	&& node->left->op.val.arifm != AR_MUL)
+		if((node->op.type == OP_ARIFM && (node->op.val.arifm == AR_MUL) &&
+		   node->left->op.type == OP_ARIFM	&& node->left->op.val.arifm != AR_MUL && node->left->op.val.arifm != AR_DIV
+		   && node->left->op.val.arifm != AR_POW)
+		   ||
+		   (node->op.type == OP_ARIFM && (node->op.val.arifm == AR_POW) &&
+		   node->left->op.type == OP_ARIFM)
+		   ||
+		   node->left->op.type == OP_ELFUNC)
 		{
 			fprintf(tex_file, "\\left(");
 			par_is_open = 1;
@@ -324,7 +330,9 @@ static tree_err_t PrintTexNode(const node_t *node, FILE *tex_file, size_t *call_
 	if(node->right)
 	{
 		if(node->op.type == OP_ARIFM && node->op.val.arifm == AR_MUL &&
-		   node->right->op.type == OP_ARIFM	&& node->right->op.val.arifm != AR_MUL)
+		   node->right->op.type == OP_ARIFM	&& (node->right->op.val.arifm == AR_ADD || node->right->op.val.arifm == AR_SUB)
+		   &&
+		   node->right->op.type != OP_ELFUNC)
 		{
 			fprintf(tex_file, "\\left(");
 			par_is_open = 1;
@@ -362,7 +370,7 @@ tree_err_t PrintTexTree(const node_t *tree, FILE *tex_file)
 	size_t call_count = 0;
 	tree_err_t err = PrintTexNode(tree, tex_file, &call_count);
 
-	fprintf(tex_file, "\\end{equation}\n");
+	fprintf(tex_file, "\\end{equation}\\vspace{1cm}\n");
 	return err;
 }
 

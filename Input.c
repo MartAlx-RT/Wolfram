@@ -112,7 +112,7 @@ char *ReadNode(char *curs, node_t *node)
 		}
 		
 		if(curs[-1] != '('); 																/* if elfunc found */
-		else if ('A' <= *curs && *curs <= 'z')												/* case variable */
+		else if ('A' <= *curs && *curs <= 'Z' || 'a' <= *curs && *curs <= 'z')				/* case variable */
 		{
 			node->op.type = OP_VAR;
 			node->op.val.var = *curs++;

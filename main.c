@@ -23,7 +23,9 @@ int main(void)
 	
 	PrintTexTree(tree, tex_file);
 	TreeDumpHTML(tree, "f.dot", "./Img", "f.html", "Test");
-	
+
+	printf("found [%p]\n", FindNode(tree, (const op_t){.type = OP_VAR, .val.var = 'x'}));
+
 	node_t *d_tree = Deriv(tree, 'x');
 	d_tree->parent = d_tree;
 	PrintTexTree(d_tree, tex_file);
