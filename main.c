@@ -29,7 +29,26 @@ int main(void)
 	node_t *d_tree = Deriv(tree, 'x');
 	d_tree->parent = d_tree;
 	PrintTexTree(d_tree, tex_file);
-	TreeDumpHTML(d_tree, "f.dot", "./Img", "f.html", "D(tree)");
+
+	size_t i = 0;
+	do
+	{
+		i = 0;
+		i += FoldConst(d_tree);
+		PrintTexTree(d_tree, tex_file);
+		TreeDumpHTML(d_tree, "f.dot", "./Img", "f.html", "(tree)");
+		
+		i += FoldNeutral(d_tree);
+		PrintTexTree(d_tree, tex_file);
+		TreeDumpHTML(d_tree, "f.dot", "./Img", "f.html", "(tree)");
+	} while (i);
+
+	// FoldConst(d_tree);
+	// FoldNeutral(d_tree);
+	
+	PrintTexTree(d_tree, tex_file);
+
+	TreeDumpHTML(d_tree, "f.dot", "./Img", "f.html", "(tree)");
 
 	CloseTex(tex_file);
 

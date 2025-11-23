@@ -139,3 +139,8 @@ int CloseTex(FILE *tex_file);
 tree_err_t PrintTexTree(const node_t *tree, FILE *tex_file);
 
 node_t *FindNode(node_t *tree, const op_t op);
+
+size_t FoldNeutral(node_t *tree);
+
+size_t FoldConst(node_t *tree);
+

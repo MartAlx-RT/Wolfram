@@ -1,5 +1,132 @@
 #include "Tree.h"
 
+/* the less priority the more important operation */
+static int PriorityForParenth(const op_t op)
+{
+	switch(op.type)
+	{
+	case OP_NUM:
+		if(op.val.num < 0)
+			return -1;
+		return 0;
+	case OP_VAR:
+		return 0;
+	case OP_ELFUNC:
+		return 3;
+	case OP_ARIFM:
+		switch(op.val.arifm)
+		{
+		case AR_POW:
+			return 1;
+		case AR_MUL:
+			return 3;
+		case AR_SUB:
+			return 4;
+		case AR_ADD:
+			return 5;
+		case AR_DIV:
+			return 6;
+		default:
+			break;
+		}
+	default:
+		break;
+	}
+	
+	printf("op?\n");
+	return 100;
+}
+
+static int NeedPar(const node_t *cur, const node_t *son)
+{
+	assert(cur);
+	assert(son);
+
+	switch(cur->op.type)
+	{
+	case OP_NUM:
+		if(cur->op.val.num < 0)
+			return 1;
+		return 0;
+	case OP_VAR:
+		return 0;
+	case OP_ELFUNC:
+		return 0;
+	case OP_ARIFM:
+		switch(cur->op.val.arifm)
+		{
+		case AR_ADD:
+			return 0;
+		case AR_DIV:
+			return 0;
+		case AR_MUL:
+			switch(son->op.type)
+			{
+			case OP_VAR:
+			case OP_NUM:
+			case OP_ELFUNC:
+				return 0;
+			case OP_ARIFM:
+				switch(son->op.val.arifm)
+				{
+				case AR_ADD:
+				case AR_SUB:
+					return 1;
+				case AR_MUL:
+				case AR_POW:
+				case AR_DIV:
+				default:
+					return 0;
+				}
+			}
+			break;
+		case AR_SUB:
+			switch(son->op.type)
+			{
+			case OP_VAR:
+			case OP_NUM:
+			case OP_ELFUNC:
+				return 0;
+			case OP_ARIFM:
+				switch(son->op.val.arifm)
+				{
+				case AR_ADD:
+				case AR_SUB:
+					if(son == cur->right)
+						return 1;
+					return 0;
+				case AR_MUL:
+				case AR_POW:
+				case AR_DIV:
+				default:
+					return 0;
+				}
+			}
+			break;
+		case AR_POW:
+			if(son == cur->right)
+				return 0;
+			
+			switch(son->op.type)
+			{
+			case OP_NUM:
+			case OP_VAR:
+				return 0;
+			case OP_ARIFM:
+			case OP_ELFUNC:
+			default:
+				return 1;
+			}
+			break;
+		}
+		break;
+	default:
+		break;
+	}
+	
+	return 1;
+}
+
 static void PrintNodeData(const node_t *node, FILE *out_file)
 {
 	assert(node);
@@ -86,54 +213,6 @@ static void PrintNodeDataTex(const node_t *node, FILE *out_file)
 		break;
 	}
 }
-
-/*
-tree_err_t PrintTree(node_t *node, FILE *dump_file, const traversal_type_t traversal_type)
-{
-    static size_t call_count = 0;
-    
-    if(call_count++ > MAX_REC_DEPTH)
-        return T_LOOP;
-
-    if (node == NULL)
-        return T_NULLPTR;
-    
-    if(dump_file == NULL)
-        return T_FILE_NULLPTR;
-    
-    if(node->parent == NULL)
-        return T_PARENT_NULLPTR;
-
-    tree_err_t err = T_NO_ERR;
-
-    putc('(', dump_file);
-    
-    if(traversal_type == TT_PREORDER)
-		PrintNodeData(node, dump_file);
-
-	if(node->left)
-        err = PrintTree(node->left, dump_file, traversal_type);
-	else
-		fprintf(dump_file, "(nil)");
-
-	if(traversal_type == TT_INORDER)
-        PrintNodeData(node, dump_file);
-    
-    TREE_OK_OR_LEAVE(err);
-    
-    if(node->right)
-        err = PrintTree(node->right, dump_file, traversal_type);
-	else
-		fprintf(dump_file, "(nil)");
-
-    if(traversal_type == TT_POSTORDER)
-        PrintNodeData(node, dump_file);
-
-    putc(')', dump_file);
-
-    return err;
-}
-*/
 
 static tree_err_t _PrintDigraphNode(const node_t *node, FILE *dot_file, size_t *call_count)
 {
@@ -295,14 +374,15 @@ static tree_err_t PrintTexNode(const node_t *node, FILE *tex_file, size_t *call_
 	fprintf(tex_file, "{");
 	if(node->left)
 	{
-		if((node->op.type == OP_ARIFM && (node->op.val.arifm == AR_MUL) &&
-		   node->left->op.type == OP_ARIFM	&& node->left->op.val.arifm != AR_MUL && node->left->op.val.arifm != AR_DIV
-		   && node->left->op.val.arifm != AR_POW)
-		   ||
-		   (node->op.type == OP_ARIFM && (node->op.val.arifm == AR_POW) &&
-		   node->left->op.type == OP_ARIFM)
-		   ||
-		   node->left->op.type == OP_ELFUNC)
+		// if((node->op.type == OP_ARIFM && (node->op.val.arifm == AR_MUL) &&
+		//    node->left->op.type == OP_ARIFM	&& node->left->op.val.arifm != AR_MUL && node->left->op.val.arifm != AR_DIV
+		//    && node->left->op.val.arifm != AR_POW)
+		//    ||
+		//    (node->op.type == OP_ARIFM && (node->op.val.arifm == AR_POW) &&
+		//    node->left->op.type == OP_ARIFM)
+		//    ||
+		//    node->left->op.type == OP_ELFUNC)
+		if(NeedPar(node, node->left))
 		{
 			fprintf(tex_file, "\\left(");
 			par_is_open = 1;
@@ -329,10 +409,11 @@ static tree_err_t PrintTexNode(const node_t *node, FILE *tex_file, size_t *call_
 	fprintf(tex_file, "{");
 	if(node->right)
 	{
-		if(node->op.type == OP_ARIFM && node->op.val.arifm == AR_MUL &&
-		   node->right->op.type == OP_ARIFM	&& (node->right->op.val.arifm == AR_ADD || node->right->op.val.arifm == AR_SUB)
-		   &&
-		   node->right->op.type != OP_ELFUNC)
+		// if(node->op.type == OP_ARIFM && node->op.val.arifm == AR_MUL &&
+		//    node->right->op.type == OP_ARIFM	&& (node->right->op.val.arifm == AR_ADD || node->right->op.val.arifm == AR_SUB)
+		//    &&
+		//    node->right->op.type != OP_ELFUNC)
+		if(NeedPar(node, node->right))
 		{
 			fprintf(tex_file, "\\left(");
 			par_is_open = 1;
@@ -408,3 +489,54 @@ int CloseTex(FILE *tex_file)
 	
 	return fclose(tex_file);
 }
+
+
+
+/*
+tree_err_t PrintTree(node_t *node, FILE *dump_file, const traversal_type_t traversal_type)
+{
+    static size_t call_count = 0;
+    
+    if(call_count++ > MAX_REC_DEPTH)
+        return T_LOOP;
+
+    if (node == NULL)
+        return T_NULLPTR;
+    
+    if(dump_file == NULL)
+        return T_FILE_NULLPTR;
+    
+    if(node->parent == NULL)
+        return T_PARENT_NULLPTR;
+
+    tree_err_t err = T_NO_ERR;
+
+    putc('(', dump_file);
+    
+    if(traversal_type == TT_PREORDER)
+		PrintNodeData(node, dump_file);
+
+	if(node->left)
+        err = PrintTree(node->left, dump_file, traversal_type);
+	else
+		fprintf(dump_file, "(nil)");
+
+	if(traversal_type == TT_INORDER)
+        PrintNodeData(node, dump_file);
+    
+    TREE_OK_OR_LEAVE(err);
+    
+    if(node->right)
+        err = PrintTree(node->right, dump_file, traversal_type);
+	else
+		fprintf(dump_file, "(nil)");
+
+    if(traversal_type == TT_POSTORDER)
+        PrintNodeData(node, dump_file);
+
+    putc(')', dump_file);
+
+    return err;
+}
+*/
+

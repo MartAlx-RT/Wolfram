@@ -354,11 +354,82 @@ void Symplify(node_t *node)
 }
 */
 
+static void TieLeftToParent(node_t *node)
+{
+	assert(node);
+	assert(node->parent);
+
+	if(node->parent->left == node)
+	{
+		node->left->parent = node->parent;
+		node->parent->left = node->left;
+	}
+	else if(node->parent->right == node)
+	{
+		node->left->parent = node->parent;
+		node->parent->right = node->left;
+	}
+	else if(node->parent == node)
+	{
+		free(node->right);
+		node->right = node->left->right;
+		node->left = node->left->left;
+		free(node->left->parent);
+
+		node->left->parent = node->right->parent = node;
+		return;
+	}
+	else
+	{
+		printf("what a hell\n");
+		return;
+	}
+
+	free(node->right);
+	free(node);
+}
+
+static void TieRightToParent(node_t *node)
+{
+	assert(node);
+	assert(node->left);
+	assert(node->right);
+
+	if(node->parent->left == node)
+	{
+		node->right->parent = node->parent;
+		node->parent->left = node->right;
+	}
+	else if(node->parent->right == node)
+	{
+		node->right->parent = node->parent;
+		node->parent->right = node->right;
+	}
+	else if(node->parent == node)
+	{
+		free(node->left);
+		node->left = node->right->left;
+		node->right = node->right->right;
+		free(node->left->parent);
+
+		node->left->parent = node->right->parent = node;
+		return;
+	}
+	else
+	{
+		printf("what a hell\n");
+		return;
+	}
+
+	free(node->left);
+	free(node);
+}
+
 static size_t _FoldConst(node_t *tree, size_t *call_count)
 {
 	assert(call_count);
 
-	if(tree == NULL || (*call_count++) > MAX_REC_DEPTH)
+	if(tree == NULL || (*call_count)++ > MAX_REC_DEPTH)
 		return 0;
 
 	double calc = 0;
@@ -401,6 +472,136 @@ size_t FoldConst(node_t *tree)
 	return _FoldConst(tree, &call_count);
 }
 
+static size_t _FoldNeutral(node_t *tree, size_t *call_count)
+{
+	assert(call_count);
+	
+	if (tree == NULL || (*call_count)++ > MAX_REC_DEPTH || tree->left == NULL || tree->right == NULL)
+		return 0;
+	
+	
+	/*-----------------------------------------*/
+	size_t n_fold = 0;
 
+	if(tree->left == NULL || tree->right == NULL)
+	{
+		printf("but how?\n");
+		return 0;
+	}
+	
+	n_fold += _FoldNeutral(tree->left, call_count);
+	n_fold += _FoldNeutral(tree->right, call_count);
+	
+	if(tree->op.type != OP_ARIFM)
+		return n_fold;
+	
+	if(tree->left == NULL || tree->right == NULL)
+	{
+		printf("but how?\n");
+		return 0;
+	}
+
+	switch(tree->op.val.arifm)
+	{
+	case AR_ADD:
+	case AR_SUB:
+		if (tree->left->op.type == OP_NUM && fcomp(tree->left->op.val.num, 0, EPS) == 0)
+		{
+			TieRightToParent(tree);
+			n_fold++;
+		}
+		else if(tree->right->op.type == OP_NUM && fcomp(tree->right->op.val.num, 0, EPS) == 0)
+		{
+			TieLeftToParent(tree);
+			n_fold++;
+		}
+		break;
+	case AR_MUL:
+		if(tree->left->op.type == OP_NUM && fcomp(tree->left->op.val.num, 0, EPS) == 0
+		||
+		tree->right->op.type == OP_NUM && fcomp(tree->right->op.val.num, 0, EPS) == 0)
+		{
+			tree->op.type = OP_NUM;
+			tree->op.val.num = 0;
+			
+			TreeDestroy(tree->left);
+			TreeDestroy(tree->right);
+			tree->left = tree->right = NULL;
+			
+			n_fold++;
+		}
+		else if(tree->left->op.type == OP_NUM && fcomp(tree->left->op.val.num, 1, EPS) == 0)
+		{
+			TieRightToParent(tree);
+			n_fold++;
+		}
+		else if(tree->right->op.type == OP_NUM && fcomp(tree->right->op.val.num, 1, EPS) == 0)
+		{
+			TieLeftToParent(tree);
+			n_fold++;
+		}
+		break;
+	case AR_DIV:
+		if(tree->left->op.type == OP_NUM && fcomp(tree->left->op.val.num, 0, EPS) == 0)
+		{
+			tree->op.type = OP_NUM;
+			tree->op.val.num = 0;
+			
+			TreeDestroy(tree->left);
+			TreeDestroy(tree->right);
+			tree->left = tree->right = NULL;
+			
+			n_fold++;
+		}
+		else if(tree->right->op.type == OP_NUM && fcomp(tree->right->op.val.num, 1, EPS) == 0)
+		{
+			TieLeftToParent(tree);
+			n_fold++;
+		}
+		break;
+	case AR_POW:
+		if(tree->right->op.type == OP_NUM && fcomp(tree->right->op.val.num, 1, EPS) == 0)
+		{
+			TieLeftToParent(tree);
+			n_fold++;
+		}
+		else if(tree->right->op.type == OP_NUM && fcomp(tree->right->op.val.num, 0, EPS) == 0
+		||
+		tree->left->op.type == OP_NUM && fcomp(tree->left->op.val.num, 1, EPS) == 0)
+		{
+			tree->op.type = OP_NUM;
+			tree->op.val.num = 1;
+			
+			TreeDestroy(tree->left);
+			TreeDestroy(tree->right);
+			tree->left = tree->right = NULL;
+			
+			n_fold++;
+		}
+		else if(tree->left->op.type == OP_NUM && fcomp(tree->left->op.val.num, 0, EPS) == 0)
+		{
+			tree->op.type = OP_NUM;
+			tree->op.val.num = 0;
+			
+			TreeDestroy(tree->left);
+			TreeDestroy(tree->right);
+			tree->left = tree->right = NULL;
+			
+			n_fold++;
+		}
+		break;
+	default:
+		printf("and what's else?\n");
+		break;
+	}
+
+	return n_fold;
+}
+
+size_t FoldNeutral(node_t *tree)
+{
+	size_t call_count = 0;
+	return _FoldNeutral(tree, &call_count);
+}
 
 #include "DSLundef.h"
