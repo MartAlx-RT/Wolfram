@@ -206,4 +206,201 @@ node_t *Deriv(const node_t *node, const char d_var)
 	return d_node;
 }
 
+static double _Calculate(const node_t *tree, const double var_val[], size_t *call_count)
+{
+	assert(call_count);
+	
+	if (tree == NULL || (*call_count)++ > MAX_REC_DEPTH)
+		return NAN;
+	
+	switch(tree->op.type)
+	{
+	case OP_ARIFM:
+		switch(tree->op.val.arifm)
+		{
+		case AR_ADD:
+			return _Calculate(tree->left, var_val, call_count) + _Calculate(tree->right, var_val, call_count);
+		case AR_DIV:
+			return _Calculate(tree->left, var_val, call_count) / _Calculate(tree->right, var_val, call_count);
+		case AR_MUL:
+			return _Calculate(tree->left, var_val, call_count) * _Calculate(tree->right, var_val, call_count);
+		case AR_POW:
+			return pow(_Calculate(tree->left, var_val, call_count), _Calculate(tree->right, var_val, call_count));
+		case AR_SUB:
+			return _Calculate(tree->left, var_val, call_count) - _Calculate(tree->right, var_val, call_count);
+		default:
+			return NAN;
+		}
+	case OP_ELFUNC:
+		switch(tree->op.val.elfunc)
+		{
+		case F_ACOS:
+			return acos(_Calculate(tree->right, var_val, call_count));
+		case F_ACOSH:
+			return acosh(_Calculate(tree->right, var_val, call_count));
+		case F_ASIN:
+			return asin(_Calculate(tree->right, var_val, call_count));
+		case F_ATAN:
+			return atan(_Calculate(tree->right, var_val, call_count));
+		case F_ATANH:
+			return atanh(_Calculate(tree->right, var_val, call_count));
+		case F_COS:
+			return cos(_Calculate(tree->right, var_val, call_count));
+		case F_COSH:
+			return cosh(_Calculate(tree->right, var_val, call_count));
+		case F_LN:
+			return log(_Calculate(tree->right, var_val, call_count));
+		case F_SIN:
+			return sin(_Calculate(tree->right, var_val, call_count));
+		case F_SINH:
+			return sinh(_Calculate(tree->right, var_val, call_count));
+		case F_TAN:
+			return tan(_Calculate(tree->right, var_val, call_count));
+		case F_TANH:
+			return tanh(_Calculate(tree->right, var_val, call_count));
+		default:
+			return NAN;
+		}
+	case OP_NUM:
+		return tree->op.val.num;
+	case OP_VAR:
+		if(var_val)
+			return var_val[tree->op.val.var];
+		return NAN;
+	default:
+		return NAN;
+	}
+
+	return NAN;
+}
+
+double Calculate(const node_t *tree, const double var_val[])
+{
+	size_t call_count = 0;
+	return _Calculate(tree, var_val, &call_count);
+}
+
+/*
+void Symplify(node_t *node)
+{
+	if(node == NULL || node->parent == NULL)
+		return;
+
+	if(node->left == NULL && node->right == NULL)
+		return;
+
+	double l_val = Calculate(node->left, NULL);
+	double r_val = Calculate(node->right, NULL);
+	
+	if(isnan(l_val) && isnan(r_val))
+	{
+		if(node->left && node->right && node->op.type == OP_ARIFM && node->left->op.val.var == node->right->op.val.var)
+		{
+			switch(node->op.val.arifm)
+			{
+			case AR_ADD:
+				node->op.val.arifm = AR_MUL;
+				node->left->op.type = OP_NUM;
+				node->left->op.val.num = 2;
+				break;
+			case AR_MUL:
+				node->op.val.arifm = AR_POW;
+				node->right->op.type = OP_NUM;
+				node->right->op.val.num = 2;
+				break;
+			case AR_DIV:
+				node->op.type = OP_NUM;
+				node->op.val.num = 1;
+
+				TreeDestroy(node->left);
+				node->left = NULL;
+				TreeDestroy(node->right);
+				node->right = NULL;
+				break;
+			case AR_SUB:
+				node->op.type = OP_NUM;
+				node->op.val.num = 0;
+				
+				TreeDestroy(node->left);
+				node->left = NULL;
+				TreeDestroy(node->right);
+				node->right = NULL;
+				break;
+			case AR_POW:
+			default:
+				break;
+			}
+		}
+		else
+			return;
+	}
+	else if(isnan(l_val))
+	{
+		if(node->op.type != OP_ARIFM)
+		{
+			printf("how?\n");
+			return;
+		}
+		
+		switch(node->op.val.arifm)
+		{
+		case AR_ADD:
+			if(fcomp(r_val, 0, EPS) == 0)
+			{
+				
+			}
+		}
+	}
+}
+*/
+
+static size_t _FoldConst(node_t *tree, size_t *call_count)
+{
+	assert(call_count);
+
+	if(tree == NULL || (*call_count++) > MAX_REC_DEPTH)
+		return 0;
+
+	double calc = 0;
+	size_t n_fold = 0;
+
+	switch(tree->op.type)
+	{
+	case OP_NUM:
+		return 0;
+	case OP_ARIFM:
+		n_fold += _FoldConst(tree->left, call_count);
+		n_fold += _FoldConst(tree->right, call_count);
+
+		calc = Calculate(tree, NULL);
+		if(!isnan(calc))
+		{
+			n_fold++;
+			tree->op.type = OP_NUM;
+			tree->op.val.num = calc;
+			
+			TreeDestroy(tree->left);
+			TreeDestroy(tree->right);
+			tree->left = tree->right = NULL;
+		}
+		break;
+	case OP_ELFUNC:
+		n_fold += _FoldConst(tree->right, call_count);
+		break;
+	case OP_VAR:
+	default:
+		break;
+	}
+
+	return n_fold;
+}
+
+size_t FoldConst(node_t *tree)
+{
+	size_t call_count = 0;
+	return _FoldConst(tree, &call_count);
+}
+
+
+
 #include "DSLundef.h"

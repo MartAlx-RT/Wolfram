@@ -177,6 +177,8 @@ static tree_err_t _TreeDestroy(node_t *tree, size_t *call_count)
 	if(tree->parent == NULL)
 		err = T_PARENT_NULLPTR;
 
+	tree->parent = NULL;
+
 	if(err)
 		_TreeDestroy(tree->left, call_count);
 	else

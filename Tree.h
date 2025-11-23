@@ -8,6 +8,7 @@
 #include <string.h>
 #include <sys/stat.h>
 #include "Colors.h"
+#include "fcomp.h"
 
 #define MODE_PRINT "%lg"
 
@@ -121,6 +122,8 @@ typedef enum traversal_type_t
 } traversal_type_t;
 
 static const size_t MAX_REC_DEPTH = 100;
+
+static const double EPS = 1e-5;
 
 /*-----------------------------------------------*/
 
