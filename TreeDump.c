@@ -45,8 +45,6 @@ static int NeedPar(const node_t *cur, const node_t *son)
 	switch(cur->op.type)
 	{
 	case OP_NUM:
-		if(cur->op.val.num < 0)
-			return 1;
 		return 0;
 	case OP_VAR:
 		return 0;
@@ -150,9 +148,12 @@ static void PrintNodeData(const node_t *node, FILE *out_file)
 		break;
 	
 	case OP_NUM:
-		fprintf(out_file, "%lg", node->op.val.num);
+		if(node->op.val.num < 0)
+			fprintf(out_file, "(%lg)", node->op.val.num);
+		else
+			fprintf(out_file, "%lg", node->op.val.num);
 		break;
-	
+
 	case N_OP:
 	default:
 		fprintf(out_file, "?");
@@ -194,7 +195,7 @@ static void PrintNodeDataTex(const node_t *node, FILE *out_file)
 	
 	case OP_ELFUNC:
 		if(node->op.val.elfunc < N_ELFUNC)
-			fprintf(out_file, "%s", ELFUNC_NAME[node->op.val.elfunc]);
+			fprintf(out_file, "\\text{%s}", ELFUNC_NAME[node->op.val.elfunc]);
 		else
 			fprintf(out_file, "???");
 		break;
@@ -204,7 +205,10 @@ static void PrintNodeDataTex(const node_t *node, FILE *out_file)
 		break;
 	
 	case OP_NUM:
-		fprintf(out_file, "%lg", node->op.val.num);
+		if(node->op.val.num < 0)
+			fprintf(out_file, "(%lg)", node->op.val.num);
+		else
+			fprintf(out_file, "%lg", node->op.val.num);
 		break;
 	
 	case N_OP:
@@ -444,15 +448,23 @@ static tree_err_t PrintTexNode(const node_t *node, FILE *tex_file, size_t *call_
 	return err;
 }
 
-tree_err_t PrintTexTree(const node_t *tree, FILE *tex_file)
+tree_err_t PrintTexTree(const node_t *tree, FILE *tex_file, const char *cap)
 {
-	fprintf(tex_file, "\\begin{equation}\n");
+	fprintf(tex_file, "\\begin{equation}\n%s", cap);
 	
 	size_t call_count = 0;
 	tree_err_t err = PrintTexNode(tree, tex_file, &call_count);
 
-	fprintf(tex_file, "\\end{equation}\\vspace{1cm}\n");
+	fprintf(tex_file, "\n\\end{equation}\\vspace{1cm}\n");
 	return err;
+}
+
+void PrintTexText(FILE *tex_file, const char *s)
+{
+	if(tex_file == NULL || s == NULL)
+		return;
+
+	fprintf(tex_file, "%s", s);
 }
 
 FILE *OpenTex(const char *tex_file_path)

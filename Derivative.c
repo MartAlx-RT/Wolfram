@@ -280,84 +280,14 @@ double Calculate(const node_t *tree, const double var_val[])
 	return _Calculate(tree, var_val, &call_count);
 }
 
-/*
-void Symplify(node_t *node)
-{
-	if(node == NULL || node->parent == NULL)
-		return;
-
-	if(node->left == NULL && node->right == NULL)
-		return;
-
-	double l_val = Calculate(node->left, NULL);
-	double r_val = Calculate(node->right, NULL);
-	
-	if(isnan(l_val) && isnan(r_val))
-	{
-		if(node->left && node->right && node->op.type == OP_ARIFM && node->left->op.val.var == node->right->op.val.var)
-		{
-			switch(node->op.val.arifm)
-			{
-			case AR_ADD:
-				node->op.val.arifm = AR_MUL;
-				node->left->op.type = OP_NUM;
-				node->left->op.val.num = 2;
-				break;
-			case AR_MUL:
-				node->op.val.arifm = AR_POW;
-				node->right->op.type = OP_NUM;
-				node->right->op.val.num = 2;
-				break;
-			case AR_DIV:
-				node->op.type = OP_NUM;
-				node->op.val.num = 1;
-
-				TreeDestroy(node->left);
-				node->left = NULL;
-				TreeDestroy(node->right);
-				node->right = NULL;
-				break;
-			case AR_SUB:
-				node->op.type = OP_NUM;
-				node->op.val.num = 0;
-				
-				TreeDestroy(node->left);
-				node->left = NULL;
-				TreeDestroy(node->right);
-				node->right = NULL;
-				break;
-			case AR_POW:
-			default:
-				break;
-			}
-		}
-		else
-			return;
-	}
-	else if(isnan(l_val))
-	{
-		if(node->op.type != OP_ARIFM)
-		{
-			printf("how?\n");
-			return;
-		}
-		
-		switch(node->op.val.arifm)
-		{
-		case AR_ADD:
-			if(fcomp(r_val, 0, EPS) == 0)
-			{
-				
-			}
-		}
-	}
-}
-*/
-
 static void TieLeftToParent(node_t *node)
 {
 	assert(node);
+	assert(node->left);
+	assert(node->right);
 	assert(node->parent);
+
+	node->op = node->left->op;
 
 	if(node->parent->left == node)
 	{
@@ -371,12 +301,21 @@ static void TieLeftToParent(node_t *node)
 	}
 	else if(node->parent == node)
 	{
-		free(node->right);
-		node->right = node->left->right;
-		node->left = node->left->left;
-		free(node->left->parent);
+		node_t *new_left = node->left->left;
+		node_t *new_right = node->left->right;
+		node_t *tying = node->left;
 
-		node->left->parent = node->right->parent = node;
+		node->left = new_left;
+		if(new_left)
+			new_left->parent = node;
+
+		free(node->right);
+		node->right = new_right;
+		if(new_right)
+			new_right->parent = node;
+
+		free(tying);
+
 		return;
 	}
 	else
@@ -394,6 +333,9 @@ static void TieRightToParent(node_t *node)
 	assert(node);
 	assert(node->left);
 	assert(node->right);
+	assert(node->parent);
+	
+	node->op = node->left->op;
 
 	if(node->parent->left == node)
 	{
@@ -407,12 +349,21 @@ static void TieRightToParent(node_t *node)
 	}
 	else if(node->parent == node)
 	{
-		free(node->left);
-		node->left = node->right->left;
-		node->right = node->right->right;
-		free(node->left->parent);
+		node_t *new_left = node->right->left;
+		node_t *new_right = node->right->right;
+		node_t *tying = node->right;
 
-		node->left->parent = node->right->parent = node;
+		free(node->left);
+		node->left = new_left;
+		if(new_left)
+			new_left->parent = node;
+
+		node->right = new_right;
+		if(new_right)
+			new_right->parent = node;
+
+		free(tying);
+
 		return;
 	}
 	else
@@ -503,10 +454,12 @@ static size_t _FoldNeutral(node_t *tree, size_t *call_count)
 
 	switch(tree->op.val.arifm)
 	{
-	case AR_ADD:
 	case AR_SUB:
+	case AR_ADD:
 		if (tree->left->op.type == OP_NUM && fcomp(tree->left->op.val.num, 0, EPS) == 0)
 		{
+			if(tree->op.val.arifm == AR_SUB)
+				tree->right->op.val.num *= -1;
 			TieRightToParent(tree);
 			n_fold++;
 		}

@@ -136,7 +136,7 @@ node_t *Deriv(const node_t *node, const char d_var);
 
 FILE *OpenTex(const char *tex_file_path);
 int CloseTex(FILE *tex_file);
-tree_err_t PrintTexTree(const node_t *tree, FILE *tex_file);
+tree_err_t PrintTexTree(const node_t *tree, FILE *tex_file, const char *cap);
 
 node_t *FindNode(node_t *tree, const op_t op);
 
@@ -144,3 +144,4 @@ size_t FoldNeutral(node_t *tree);
 
 size_t FoldConst(node_t *tree);
 
+void PrintTexText(FILE *tex_file, const char *s);
