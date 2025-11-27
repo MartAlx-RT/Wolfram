@@ -1,10 +1,11 @@
-#include "Tree.h"
+#include "Wolfram.h"
 
 
 // (/(+(sh(nil)(+(^(x(nil)(nil))(3(nil)(nil)))(1(nil)(nil))))(ch(nil)(+(^(x(nil)(nil))(4(nil)(nil)))(2(nil)(nil)))))(th(nil)(+(^(x(nil)(nil))(5(nil)(nil)))(3(nil)(nil)))))
 // (*(x(nil)(nil))(y(nil)(nil)))
 int main(void)
 {
+	
 	int status = 0;
 	node_t *tree = (node_t *)calloc(1, sizeof(node_t));
 	assert(tree);
@@ -28,7 +29,9 @@ int main(void)
 
 	printf("found [%p]\n", FindNode(tree, (const op_t){.type = OP_VAR, .val.var = 'x'}));
 
-	node_t *d_tree = Deriv(tree, 'x');
+	node_t *d1_tree = tree;
+	node_t *d_tree = tree;
+
 	d_tree->parent = d_tree;
 
 	PrintTexText(tex_file, "Очевидно, что\n");
@@ -60,7 +63,11 @@ int main(void)
 	CloseTex(tex_file);
 
 	TreeDestroy(tree);
-	TreeDestroy(d_tree);
+	//TreeDestroy(d_tree);
+	//TreeDestroy(d1_tree);
+
 	free(buf);
 	return status;
+	
+	
 }

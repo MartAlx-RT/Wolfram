@@ -7,8 +7,8 @@ CC = gcc
 
 all: main
 
-main: TreeDump.o main.o Input.o Derivative.o fcomp.o
-	$(CC) $(linker_flags) TreeDump.o main.o Input.o Derivative.o fcomp.o
+main: TreeDump.o main.o Input.o Derivative.o Fcomp.o Calculator.o Tree.o Optimizer.o
+	$(CC) $(linker_flags) TreeDump.o main.o Input.o Derivative.o Fcomp.o Calculator.o Tree.o Optimizer.o
 
 TreeDump.o: TreeDump.c
 
@@ -16,7 +16,13 @@ main.o: main.c
 
 Input.o: Input.c
 
-fcomp.o: fcomp.c
+Calculator.o: Calculator.c
+
+Tree.o: Tree.c
+
+Optimizer.o: Optimizer.c
+
+Fcomp.o: Fcomp.c
 
 Derivative.o: Derivative.c
 

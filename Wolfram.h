@@ -8,7 +8,6 @@
 #include <string.h>
 #include <sys/stat.h>
 #include "Colors.h"
-#include "fcomp.h"
 
 #define MODE_PRINT "%lg"
 
@@ -121,18 +120,19 @@ typedef enum traversal_type_t
     TT_INORDER
 } traversal_type_t;
 
-static const size_t MAX_REC_DEPTH = 100;
+static const size_t MAX_REC_DEPTH = 1000;
 
 static const double EPS = 1e-5;
 
 /*-----------------------------------------------*/
 
+/* tree functions */
 tree_err_t TreeDumpHTML(const node_t *node, const char *dot_file_path, const char *img_dir_path, const char *html_file_path, const char *caption);
 long ReadFileToBuf(const char *file_path, char **buf);
 char *ReadNode(char *curs, node_t *node);
 tree_err_t TreeDestroy(node_t *tree);
 node_t *TreeCopy(const node_t *tree);
-node_t *Deriv(const node_t *node, const char d_var);
+node_t *TakeDeriv(const node_t *node, const char d_var);
 
 FILE *OpenTex(const char *tex_file_path);
 int CloseTex(FILE *tex_file);
@@ -145,3 +145,20 @@ size_t FoldNeutral(node_t *tree);
 size_t FoldConst(node_t *tree);
 
 void PrintTexText(FILE *tex_file, const char *s);
+
+int Fcomp(const double val, const double ref_val, const double prec);
+
+int NodeNumEqTo(const double ref_num, const node_t *node);
+
+void ClearBuf(void);
+
+double Calc(const node_t *tree, const double var_val[]);
+
+node_t *NewNode(const op_t op, node_t *left, node_t *right);
+
+void TieLeftToParent(node_t *node);
+
+void TieRightToParent(node_t *node);
+
+void AddLeaves(node_t *node);
+

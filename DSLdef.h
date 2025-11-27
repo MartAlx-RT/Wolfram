@@ -1,5 +1,5 @@
 #pragma once
-#include "Tree.h"
+#include "Wolfram.h"
 
 #define NUM(n)				NewNode((const op_t){.type = OP_NUM,   .val.num = n}, NULL, NULL)
 
@@ -16,9 +16,9 @@
 #define SINH_(expr)			NewNode((const op_t){.type = OP_ELFUNC, .val.elfunc = F_SINH}, NULL, expr)
 #define COSH_(expr)			NewNode((const op_t){.type = OP_ELFUNC, .val.elfunc = F_COSH}, NULL, expr)
 
-#define dL		Deriv(node->left, d_var)
-#define dR		Deriv(node->right, d_var)
+#define dL		TakeDeriv(tree->left, d_var)
+#define dR		TakeDeriv(tree->right, d_var)
 
-#define cL		TreeCopy(node->left)
-#define cR		TreeCopy(node->right)
-#define cC		TreeCopy(node)
+#define cL		TreeCopy(tree->left)
+#define cR		TreeCopy(tree->right)
+#define cC		TreeCopy(tree)

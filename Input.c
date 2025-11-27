@@ -1,22 +1,10 @@
-#include "Tree.h"
-
-static void AddLeaves(node_t *node)
-{
-	assert(node);
-	
-	node->left = (node_t *)calloc(1, sizeof(node_t));
-	assert(node->left);
-	
-	node->right = (node_t *)calloc(1, sizeof(node_t));
-	assert(node->right);
-
-	node->left->parent = node->right->parent = node;
-}
+#include "Wolfram.h"
 
 void ClearBuf(void)
 {
 	while(getchar() != '\n');
 }
+
 
 long ReadFileToBuf(const char *file_path, char **buf)
 {
@@ -112,13 +100,13 @@ char *ReadNode(char *curs, node_t *node)
 		}
 		
 		if(curs[-1] != '('); 																/* if elfunc found */
-		else if ('A' <= *curs && *curs <= 'Z' || 'a' <= *curs && *curs <= 'z')				/* case variable */
+		else if (('A' <= *curs && *curs <= 'Z') || ('a' <= *curs && *curs <= 'z'))				/* case variable */
 		{
 			node->op.type = OP_VAR;
 			node->op.val.var = *curs++;
 			/* ... */
 		}
-		else if('0' <= *curs && *curs <= '9' || curs[0] == '-' && curs[1] != '(')			/* case number */
+		else if(('0' <= *curs && *curs <= '9') || (curs[0] == '-' && curs[1] != '('))			/* case number */
 		{
 			int offset = 0;
 			node->op.type = OP_NUM;
@@ -161,40 +149,6 @@ char *ReadNode(char *curs, node_t *node)
 	return NULL;
 }
 
-static tree_err_t _TreeDestroy(node_t *tree, size_t *call_count)
-{
-	assert(call_count);
-	
-	if (tree == NULL)
-		return T_NODE_NULLPTR;
 
-    if((*call_count)++ > MAX_REC_DEPTH)
-        return T_LOOP;
-	/*-----------------------------*/
-	
-	tree_err_t err = T_NO_ERR;
-    
-	if(tree->parent == NULL)
-		err = T_PARENT_NULLPTR;
+/*---------------------------------------------------------------*/
 
-	tree->parent = NULL;
-
-	if(err)
-		_TreeDestroy(tree->left, call_count);
-	else
-		err = _TreeDestroy(tree->left, call_count);
-	
-	if (err)
-		_TreeDestroy(tree->right, call_count);
-	else
-		err = _TreeDestroy(tree->right, call_count);
-	
-	free(tree);
-	return err;
-}
-
-tree_err_t TreeDestroy(node_t *tree)
-{
-	size_t call_counts = 0;
-	return _TreeDestroy(tree, &call_counts);
-}

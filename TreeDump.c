@@ -1,43 +1,6 @@
-#include "Tree.h"
+#include "Wolfram.h"
 
-/* the less priority the more important operation */
-static int PriorityForParenth(const op_t op)
-{
-	switch(op.type)
-	{
-	case OP_NUM:
-		if(op.val.num < 0)
-			return -1;
-		return 0;
-	case OP_VAR:
-		return 0;
-	case OP_ELFUNC:
-		return 3;
-	case OP_ARIFM:
-		switch(op.val.arifm)
-		{
-		case AR_POW:
-			return 1;
-		case AR_MUL:
-			return 3;
-		case AR_SUB:
-			return 4;
-		case AR_ADD:
-			return 5;
-		case AR_DIV:
-			return 6;
-		default:
-			break;
-		}
-	default:
-		break;
-	}
-	
-	printf("op?\n");
-	return 100;
-}
-
-static int NeedPar(const node_t *cur, const node_t *son)
+static int NeedPar(const node_t *cur, const node_t *son)	/* for correct placement of parenthes */
 {
 	assert(cur);
 	assert(son);
@@ -76,7 +39,12 @@ static int NeedPar(const node_t *cur, const node_t *son)
 				default:
 					return 0;
 				}
+			
+			case N_OP:
+			default:
+				break;
 			}
+			
 			break;
 		case AR_SUB:
 			switch(son->op.type)
@@ -99,7 +67,12 @@ static int NeedPar(const node_t *cur, const node_t *son)
 				default:
 					return 0;
 				}
+			
+			case N_OP:
+			default:
+				break;
 			}
+			
 			break;
 		case AR_POW:
 			if(son == cur->right)
@@ -112,18 +85,26 @@ static int NeedPar(const node_t *cur, const node_t *son)
 				return 0;
 			case OP_ARIFM:
 			case OP_ELFUNC:
+			case N_OP:
 			default:
 				return 1;
 			}
 			break;
+		
+		default:
+			print_err_msg("op.val.arifm is out of range arifm_t");
+			break;
 		}
 		break;
+	
+	case N_OP:
 	default:
 		break;
 	}
 	
 	return 1;
 }
+
 
 static void PrintNodeData(const node_t *node, FILE *out_file)
 {
@@ -149,7 +130,7 @@ static void PrintNodeData(const node_t *node, FILE *out_file)
 	
 	case OP_NUM:
 		if(node->op.val.num < 0)
-			fprintf(out_file, "(%lg)", node->op.val.num);
+			fprintf(out_file, "%lg", node->op.val.num);
 		else
 			fprintf(out_file, "%lg", node->op.val.num);
 		break;
@@ -217,6 +198,7 @@ static void PrintNodeDataTex(const node_t *node, FILE *out_file)
 		break;
 	}
 }
+
 
 static tree_err_t _PrintDigraphNode(const node_t *node, FILE *dot_file, size_t *call_count)
 {
@@ -297,7 +279,7 @@ static tree_err_t CreateDigraph(const node_t *node, const char *dot_file_path)
         return T_FILE_NULLPTR;
     }
 
-    fprintf(dot_file, "digraph Tree\n{\n");
+    fprintf(dot_file, "digraph Wolfram\n{\n");
 	tree_err_t err = PrintDigraphNode(node, dot_file);
 	
 	
@@ -305,50 +287,6 @@ static tree_err_t CreateDigraph(const node_t *node, const char *dot_file_path)
 	putc('}', dot_file);
 	fclose(dot_file);
 	return err;
-}
-
-tree_err_t TreeDumpHTML(const node_t *node, const char *dot_file_path, const char *img_dir_path, const char *html_file_path, const char *caption)
-{
-	if(node == NULL)
-        return T_NODE_NULLPTR;
-	
-	if(dot_file_path == NULL || html_file_path == NULL || img_dir_path == NULL || caption == NULL)
-		return T_FILE_NULLPTR;
-
-	static size_t call_count = 0;
-
-    FILE *html_file = NULL;
-
-    if(call_count == 0)
-    {
-        html_file = fopen(html_file_path, "w");
-        fclose(html_file);
-    }
-
-    html_file = fopen(html_file_path, "a+");
-	assert(html_file);
-
-	tree_err_t err = CreateDigraph(node, dot_file_path);
-
-    char system_msg[100] = "";
-    snprintf(system_msg, 100, "dot %s -Tsvg -o %s/%lu.svg\n", dot_file_path, img_dir_path, call_count);
-    //printf("sys_msg = {%s}\n", system_msg);
-    if(system(system_msg))
-	{
-		printf("'system' error\n");
-		return T_FILE_NULLPTR;
-	}
-
-	fprintf(html_file, "<pre>\n\t<h2>%s</h2>\n", caption);
-
-    fprintf(html_file, "\t<img  src=\"%s/%lu.svg\" alt=\"%s\" width=\"1200px\"/>\n", img_dir_path, call_count, caption);
-
-    fprintf(html_file, "\t<hr>\n</pre>\n\n");
-    fclose(html_file);
-
-    call_count++;
-
-    return err;
 }
 
 static tree_err_t PrintTexNode(const node_t *node, FILE *tex_file, size_t *call_count)
@@ -448,6 +386,51 @@ static tree_err_t PrintTexNode(const node_t *node, FILE *tex_file, size_t *call_
 	return err;
 }
 
+
+tree_err_t TreeDumpHTML(const node_t *node, const char *dot_file_path, const char *img_dir_path, const char *html_file_path, const char *caption)
+{
+	if(node == NULL)
+        return T_NODE_NULLPTR;
+	
+	if(dot_file_path == NULL || html_file_path == NULL || img_dir_path == NULL || caption == NULL)
+		return T_FILE_NULLPTR;
+
+	static size_t call_count = 0;
+
+    FILE *html_file = NULL;
+
+    if(call_count == 0)
+    {
+        html_file = fopen(html_file_path, "w");
+        fclose(html_file);
+    }
+
+    html_file = fopen(html_file_path, "a+");
+	assert(html_file);
+
+	tree_err_t err = CreateDigraph(node, dot_file_path);
+
+    char system_msg[100] = "";
+    snprintf(system_msg, 100, "dot %s -Tsvg -o %s/%lu.svg\n", dot_file_path, img_dir_path, call_count);
+    //printf("sys_msg = {%s}\n", system_msg);
+    if(system(system_msg))
+	{
+		printf("'system' error\n");
+		return T_FILE_NULLPTR;
+	}
+
+	fprintf(html_file, "<pre>\n\t<h2>%s</h2>\n", caption);
+
+    fprintf(html_file, "\t<img  src=\"%s/%lu.svg\" alt=\"%s\" width=\"1200px\"/>\n", img_dir_path, call_count, caption);
+
+    fprintf(html_file, "\t<hr>\n</pre>\n\n");
+    fclose(html_file);
+
+    call_count++;
+
+    return err;
+}
+
 tree_err_t PrintTexTree(const node_t *tree, FILE *tex_file, const char *cap)
 {
 	fprintf(tex_file, "\\begin{equation}\n%s", cap);
@@ -466,6 +449,7 @@ void PrintTexText(FILE *tex_file, const char *s)
 
 	fprintf(tex_file, "%s", s);
 }
+
 
 FILE *OpenTex(const char *tex_file_path)
 {

@@ -15,3 +15,7 @@
 
 #define colorize(expr, col) \
 col expr _RESET_COLORS_
+
+#define print_err_msg(msg) \
+	printf("%s: " colorize(msg, _BOLD_ _RED_) "\n", __func__)
+	
