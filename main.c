@@ -5,7 +5,7 @@
 // (*(x(nil)(nil))(y(nil)(nil)))
 int main(void)
 {
-	
+	/*	
 	int status = 0;
 	node_t *tree = (node_t *)calloc(1, sizeof(node_t));
 	assert(tree);
@@ -68,6 +68,23 @@ int main(void)
 
 	free(buf);
 	return status;
-	
-	
+	*/
+
+	node_t *tree = ReadTree(stdin);
+	assert(tree);
+
+	tree->parent = tree;
+
+	FILE *tex_file = OpenTex("f.tex");
+	assert(tex_file);
+
+	TreeDumpHTML(tree, "f.dot", "./Img", "f.html", "test");
+
+	PrintTexTree(tree, tex_file, "");
+
+	CloseTex(tex_file);
+	system("pdflatex f.tex -o f.pdf\n");
+
+	TreeDestroy(tree);
+	return 0;
 }

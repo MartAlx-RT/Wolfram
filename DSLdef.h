@@ -2,6 +2,7 @@
 #include "Wolfram.h"
 
 #define NUM(n)				NewNode((const op_t){.type = OP_NUM,   .val.num = n}, NULL, NULL)
+#define VAR(v)				NewNode((const op_t){.type = OP_VAR, .val.var = v}, NULL, NULL)
 
 #define ADD_(expr1, expr2)	NewNode((const op_t){.type = OP_ARIFM, .val.arifm = AR_ADD}, expr1, expr2)
 #define SUB_(expr1, expr2)	NewNode((const op_t){.type = OP_ARIFM, .val.arifm = AR_SUB}, expr1, expr2)

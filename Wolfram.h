@@ -7,6 +7,7 @@
 #include <math.h>
 #include <string.h>
 #include <sys/stat.h>
+#include <ctype.h>
 #include "Colors.h"
 
 #define MODE_PRINT "%lg"
@@ -161,4 +162,6 @@ void TieLeftToParent(node_t *node);
 void TieRightToParent(node_t *node);
 
 void AddLeaves(node_t *node);
+
+node_t *ReadTree(FILE *in_file);
 
