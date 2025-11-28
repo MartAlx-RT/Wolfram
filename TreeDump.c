@@ -431,7 +431,7 @@ tree_err_t TreeDumpHTML(const node_t *node, const char *dot_file_path, const cha
     return err;
 }
 
-tree_err_t PrintTexTree(const node_t *tree, FILE *tex_file, const char *cap)
+tree_err_t TreeDumpTEX(const node_t *tree, FILE *tex_file, const char *cap)
 {
 	fprintf(tex_file, "\\begin{equation}\n%s", cap);
 	
@@ -442,7 +442,7 @@ tree_err_t PrintTexTree(const node_t *tree, FILE *tex_file, const char *cap)
 	return err;
 }
 
-void PrintTexText(FILE *tex_file, const char *s)
+void PutsTEX(FILE *tex_file, const char *s)
 {
 	if(tex_file == NULL || s == NULL)
 		return;
@@ -451,7 +451,7 @@ void PrintTexText(FILE *tex_file, const char *s)
 }
 
 
-FILE *OpenTex(const char *tex_file_path)
+FILE *OpenTEX(const char *tex_file_path)
 {
 	if(tex_file_path == NULL)
 		return NULL;
@@ -476,7 +476,7 @@ FILE *OpenTex(const char *tex_file_path)
 	return tex_file;
 }
 
-int CloseTex(FILE *tex_file)
+int CloseTEX(FILE *tex_file)
 {
 	if(tex_file == NULL)
 		return 1;

@@ -57,7 +57,7 @@ long ReadFileToBuf(const char *file_path, char **buf)
     return buf_size;
 }
 
-char *ReadNode(char *curs, node_t *node)
+char *ReadPrefix(char *curs, node_t *node)
 {
 	if(node == NULL || curs == NULL)
 		return NULL;
@@ -144,8 +144,8 @@ char *ReadNode(char *curs, node_t *node)
 		}
 
 		/* do this after if..elif..else */
-		curs = ReadNode(curs, node->left);
-		curs = ReadNode(curs, node->right);
+		curs = ReadPrefix(curs, node->left);
+		curs = ReadPrefix(curs, node->right);
 		if(curs == NULL)
 			return NULL;
 		
@@ -430,7 +430,7 @@ static node_t *GetN(char **s)
 
 	double val = 0;
 	int off = 0;
-	char *old_p = *s;
+	//char *old_p = *s;
 
 	/*
 	int sign = +1;
@@ -562,7 +562,7 @@ int GetF(char **s)
 }
 */
 
-node_t *ReadTree(FILE *in_file)
+node_t *ReadInfix(FILE *in_file)
 {
 	if(in_file == NULL)
 		return NULL;

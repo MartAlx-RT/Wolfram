@@ -128,40 +128,37 @@ static const double EPS = 1e-5;
 /*-----------------------------------------------*/
 
 /* tree functions */
-tree_err_t TreeDumpHTML(const node_t *node, const char *dot_file_path, const char *img_dir_path, const char *html_file_path, const char *caption);
-long ReadFileToBuf(const char *file_path, char **buf);
-char *ReadNode(char *curs, node_t *node);
-tree_err_t TreeDestroy(node_t *tree);
 node_t *TreeCopy(const node_t *tree);
-node_t *TakeDeriv(const node_t *node, const char d_var);
-
-FILE *OpenTex(const char *tex_file_path);
-int CloseTex(FILE *tex_file);
-tree_err_t PrintTexTree(const node_t *tree, FILE *tex_file, const char *cap);
-
 node_t *FindNode(node_t *tree, const op_t op);
-
-size_t FoldNeutral(node_t *tree);
-
-size_t FoldConst(node_t *tree);
-
-void PrintTexText(FILE *tex_file, const char *s);
-
-int Fcomp(const double val, const double ref_val, const double prec);
-
-int NodeNumEqTo(const double ref_num, const node_t *node);
-
-void ClearBuf(void);
-
-double Calc(const node_t *tree, const double var_val[]);
-
+tree_err_t TreeDestroy(node_t *tree);
+void TieLeftToParent(node_t *node);
+void TieRightToParent(node_t *node);
+void AddLeaves(node_t *node);
 node_t *NewNode(const op_t op, node_t *left, node_t *right);
 
-void TieLeftToParent(node_t *node);
+/* input */
+void ClearBuf(void);
+long ReadFileToBuf(const char *file_path, char **buf);
+char *ReadPrefix(char *curs, node_t *node);
+node_t *ReadInfix(FILE *in_file);
 
-void TieRightToParent(node_t *node);
+/* dump functions */
+tree_err_t TreeDumpHTML(const node_t *node, const char *dot_file_path, const char *img_dir_path, const char *html_file_path, const char *caption);
+tree_err_t TreeDumpTEX(const node_t *tree, FILE *tex_file, const char *cap);
+void PutsTEX(FILE *tex_file, const char *s);
+FILE *OpenTEX(const char *tex_file_path);
+int CloseTEX(FILE *tex_file);
 
-void AddLeaves(node_t *node);
+/* differentiator */
+node_t *TakeDeriv(const node_t *node, const char d_var);
 
-node_t *ReadTree(FILE *in_file);
+/* optimizer */
+size_t FoldNeutral(node_t *tree);
+size_t FoldConst(node_t *tree);
+double Calc(const node_t *tree, const double var_val[]);
+
+/* comparing double functions */
+int Fcomp(const double val, const double ref_val, const double prec);
+int NodeNumEqTo(const double ref_num, const node_t *node);
+
 

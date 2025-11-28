@@ -1,8 +1,6 @@
 #include "Wolfram.h"
 
 
-// (/(+(sh(nil)(+(^(x(nil)(nil))(3(nil)(nil)))(1(nil)(nil))))(ch(nil)(+(^(x(nil)(nil))(4(nil)(nil)))(2(nil)(nil)))))(th(nil)(+(^(x(nil)(nil))(5(nil)(nil)))(3(nil)(nil)))))
-// (*(x(nil)(nil))(y(nil)(nil)))
 int main(void)
 {
 	/*	
@@ -17,14 +15,14 @@ int main(void)
 
 	printf("buf = %lu\n", (size_t)buf);
 	
-	if(ReadNode(buf, tree) == NULL)
+	if(ReadPrefix(buf, tree) == NULL)
 		status = 1;
 
-	FILE *tex_file = OpenTex("f.tex");
+	FILE *tex_file = OpenTEX("f.tex");
 
-	PrintTexText(tex_file, "В качестве примера письменной работы по математическому анализу рассмотрим\n");
+	PutsTEX(tex_file, "В качестве примера письменной работы по математическому анализу рассмотрим\n");
 
-	PrintTexTree(tree, tex_file, "f=");
+	TreeDumpTEX(tree, tex_file, "f=");
 	TreeDumpHTML(tree, "f.dot", "./Img", "f.html", "Test");
 
 	printf("found [%p]\n", FindNode(tree, (const op_t){.type = OP_VAR, .val.var = 'x'}));
@@ -34,9 +32,9 @@ int main(void)
 
 	d_tree->parent = d_tree;
 
-	PrintTexText(tex_file, "Очевидно, что\n");
+	PutsTEX(tex_file, "Очевидно, что\n");
 
-	PrintTexTree(d_tree, tex_file, "\\frac{\\partial f}{\\partial x}=");
+	TreeDumpTEX(d_tree, tex_file, "\\frac{\\partial f}{\\partial x}=");
 	//getchar();
 
 	size_t i = 0;
@@ -44,23 +42,23 @@ int main(void)
 	{
 		i = 0;
 		i += FoldConst(d_tree);
-		//PrintTexTree(d_tree, tex_file);
+		//TreeDumpTEX(d_tree, tex_file);
 		TreeDumpHTML(d_tree, "f.dot", "./Img", "f.html", "(tree)");
 		
 		i += FoldNeutral(d_tree);
 		if(i)
-			PrintTexTree(d_tree, tex_file, "\\frac{\\partial f}{\\partial x}=");
+			TreeDumpTEX(d_tree, tex_file, "\\frac{\\partial f}{\\partial x}=");
 		TreeDumpHTML(d_tree, "f.dot", "./Img", "f.html", "(tree)");
 	} while (i);
 
 	// FoldConst(d_tree);
 	// FoldNeutral(d_tree);
 	
-	//PrintTexTree(d_tree, tex_file);
+	//TreeDumpTEX(d_tree, tex_file);
 
 	TreeDumpHTML(d_tree, "f.dot", "./Img", "f.html", "(tree)");
 
-	CloseTex(tex_file);
+	CloseTEX(tex_file);
 
 	TreeDestroy(tree);
 	//TreeDestroy(d_tree);
@@ -70,21 +68,36 @@ int main(void)
 	return status;
 	*/
 
-	node_t *tree = ReadTree(stdin);
+	node_t *tree = ReadInfix(stdin);
 	assert(tree);
 
 	tree->parent = tree;
 
-	FILE *tex_file = OpenTex("f.tex");
+	FILE *tex_file = OpenTEX("f.tex");
 	assert(tex_file);
 
 	TreeDumpHTML(tree, "f.dot", "./Img", "f.html", "test");
 
-	PrintTexTree(tree, tex_file, "");
+	PutsTEX(tex_file, "вы ввели\n");
+	TreeDumpTEX(tree, tex_file, "");
+	
+	PutsTEX(tex_file, "первая производная\n");
+	node_t *d_tree = TakeDeriv(tree, 'x');
+	assert(d_tree);
+	d_tree->parent = d_tree;
 
-	CloseTex(tex_file);
-	system("pdflatex f.tex -o f.pdf\n");
+	TreeDumpTEX(d_tree, tex_file, "\\frac{\\partial}{\\partial x} = ");
+	TreeDumpHTML(d_tree, "f.dot", "./Img", "f.html", "D(before folding)");
+
+	while(FoldConst(d_tree) || FoldNeutral(d_tree));
+	PutsTEX(tex_file, "после упрощения\n");
+	TreeDumpTEX(d_tree, tex_file, "\\frac{\\partial}{\\partial x} = ");
+	TreeDumpHTML(d_tree, "f.dot", "./Img", "f.html", "D()");
+
+	CloseTEX(tex_file);
+	system("pdflatex f.tex -o f.pdf > /dev/null\n");
 
 	TreeDestroy(tree);
+	TreeDestroy(d_tree);
 	return 0;
 }

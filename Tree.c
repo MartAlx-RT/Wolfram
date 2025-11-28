@@ -136,7 +136,7 @@ void TieRightToParent(node_t *node)
 	assert(node->right);
 	assert(node->parent);
 	
-	node->op = node->left->op;
+	node->op = node->right->op;
 
 	if(node->parent->left == node)
 	{
