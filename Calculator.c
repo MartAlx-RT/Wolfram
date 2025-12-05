@@ -74,6 +74,31 @@ static double _Calc(const node_t *tree, const double var_val[], size_t *call_cou
 	return NAN;
 }
 
+int FracApprox(double x, frac_t *frac)
+{
+	if(isnan(x) || isinf(x) || frac == NULL)
+		return 0;
+	
+	if(Feq(x - trunc(x), 0, EPS))
+		return 0;
+	/*--------------------------*/
+	
+	if (x < 0)
+	{
+		x = -x;
+		frac->sgn = -1;
+	}
+	else
+		frac->sgn = +1;
+
+	size_t denomer = 2;
+	for (; !Feq((double)denomer * x - trunc((double)denomer * x), 0, EPS); denomer++);
+
+	frac->denomer = denomer;
+	frac->numer = (size_t)((double)denomer * x);
+	return 1;
+}
+
 /* entrance to recursion */
 double Calc(const node_t *tree, const double var_val[])
 {

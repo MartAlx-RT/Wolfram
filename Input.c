@@ -397,6 +397,8 @@ static node_t *GetP(char **s)
 	if(**s == '(')
 	{
 		(*s)++;
+		SkipSpaces(s);
+		
 		node_t *node = GetE(s);
 		EXISTS_OR_LEAVE(node);
 		assert(*s);
@@ -486,7 +488,7 @@ static node_t *GetF(char **s)
 	assert(s);
 	assert(*s);
 
-	printf("*s = {%s}\n", *s);
+	//printf("*s = {%s}\n", *s);
 
 	char *f_name = NULL;
 	int off = 0;

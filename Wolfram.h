@@ -121,7 +121,15 @@ typedef enum traversal_type_t
     TT_INORDER
 } traversal_type_t;
 
-static const size_t MAX_REC_DEPTH = 1000;
+typedef struct frac_t
+{
+	int sgn;
+
+	size_t numer;
+	size_t denomer;
+} frac_t;
+
+static const size_t MAX_REC_DEPTH = 100000;
 
 static const double EPS = 1e-5;
 
@@ -148,6 +156,7 @@ tree_err_t TreeDumpTEX(const node_t *tree, FILE *tex_file, const char *cap);
 void PutsTEX(FILE *tex_file, const char *s);
 FILE *OpenTEX(const char *tex_file_path);
 int CloseTEX(FILE *tex_file);
+int BuildTEX(const char *tex_file_name);
 
 /* differentiator */
 node_t *TakeDeriv(const node_t *node, const char d_var);
@@ -155,10 +164,11 @@ node_t *TakeDeriv(const node_t *node, const char d_var);
 /* optimizer */
 size_t FoldNeutral(node_t *tree);
 size_t FoldConst(node_t *tree);
+
+/* calculator */
 double Calc(const node_t *tree, const double var_val[]);
+int FracApprox(double x, frac_t *frac);
 
 /* comparing double functions */
-int Fcomp(const double val, const double ref_val, const double prec);
+int Feq(const double val1, const double val2, double prec);
 int NodeNumEqTo(const double ref_num, const node_t *node);
-
-

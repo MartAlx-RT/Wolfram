@@ -53,7 +53,7 @@ static tree_err_t _TreeDestroy(node_t *tree, size_t *call_count)
 	assert(call_count);
 	
 	if (tree == NULL)
-		return T_NODE_NULLPTR;
+		return T_NO_ERR;
 
     if((*call_count)++ > MAX_REC_DEPTH)
         return T_LOOP;
@@ -61,10 +61,9 @@ static tree_err_t _TreeDestroy(node_t *tree, size_t *call_count)
 	
 	tree_err_t err = T_NO_ERR;
     
-	if(tree->parent == NULL)
-		err = T_PARENT_NULLPTR;
+	// if(tree->parent == NULL)
+	// 	err = T_PARENT_NULLPTR;
 
-	tree->parent = NULL;
 
 	if(err)
 		_TreeDestroy(tree->left, call_count);
@@ -75,6 +74,11 @@ static tree_err_t _TreeDestroy(node_t *tree, size_t *call_count)
 		_TreeDestroy(tree->right, call_count);
 	else
 		err = _TreeDestroy(tree->right, call_count);
+
+	tree->op.type = N_OP;
+	tree->op.val.var = 0;
+	tree->parent = NULL;
+	tree->left = tree->right = NULL;
 	
 	free(tree);
 	return err;
@@ -86,21 +90,11 @@ void TieLeftToParent(node_t *node)
 	assert(node);
 	assert(node->left);
 	assert(node->right);
-	assert(node->parent);
+	//assert(node->parent);
 
 	node->op = node->left->op;
 
-	if(node->parent->left == node)
-	{
-		node->left->parent = node->parent;
-		node->parent->left = node->left;
-	}
-	else if(node->parent->right == node)
-	{
-		node->left->parent = node->parent;
-		node->parent->right = node->left;
-	}
-	else if(node->parent == node)
+	if(node->parent == node || node->parent == NULL)
 	{
 		node_t *new_left = node->left->left;
 		node_t *new_right = node->left->right;
@@ -119,6 +113,16 @@ void TieLeftToParent(node_t *node)
 
 		return;
 	}
+	else if(node->parent->left == node)
+	{
+		node->left->parent = node->parent;
+		node->parent->left = node->left;
+	}
+	else if(node->parent->right == node)
+	{
+		node->left->parent = node->parent;
+		node->parent->right = node->left;
+	}
 	else
 	{
 		print_err_msg("node->parent points to unknown");
@@ -134,21 +138,11 @@ void TieRightToParent(node_t *node)
 	assert(node);
 	assert(node->left);
 	assert(node->right);
-	assert(node->parent);
+	//assert(node->parent);
 	
 	node->op = node->right->op;
 
-	if(node->parent->left == node)
-	{
-		node->right->parent = node->parent;
-		node->parent->left = node->right;
-	}
-	else if(node->parent->right == node)
-	{
-		node->right->parent = node->parent;
-		node->parent->right = node->right;
-	}
-	else if(node->parent == node)
+	if(node->parent == node || node->parent == NULL)
 	{
 		node_t *new_left = node->right->left;
 		node_t *new_right = node->right->right;
@@ -166,6 +160,16 @@ void TieRightToParent(node_t *node)
 		free(tying);
 
 		return;
+	}
+	else if(node->parent->left == node)
+	{
+		node->right->parent = node->parent;
+		node->parent->left = node->right;
+	}
+	else if(node->parent->right == node)
+	{
+		node->right->parent = node->parent;
+		node->parent->right = node->right;
 	}
 	else
 	{

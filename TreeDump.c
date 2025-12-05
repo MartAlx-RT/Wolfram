@@ -12,7 +12,7 @@ static int NeedPar(const node_t *cur, const node_t *son)	/* for correct placemen
 	case OP_VAR:
 		return 0;
 	case OP_ELFUNC:
-		return 0;
+		return 1;
 	case OP_ARIFM:
 		switch(cur->op.val.arifm)
 		{
@@ -215,11 +215,11 @@ static tree_err_t _PrintDigraphNode(const node_t *node, FILE *dot_file, size_t *
     if(dot_file == NULL)
         return T_FILE_NULLPTR;
     
-    if(node->parent == NULL)
-	{
-		fprintf(dot_file, "label%lu->NULL\n", (size_t)node);
-		return T_PARENT_NULLPTR;
-	}
+    // if(node->parent == NULL)
+	// {
+	// 	fprintf(dot_file, "label%lu->NULL\n", (size_t)node);
+	// 	return T_PARENT_NULLPTR;
+	// }
 
     tree_err_t err = T_NO_ERR;
 
@@ -309,21 +309,11 @@ static tree_err_t PrintTexNode(const node_t *node, FILE *tex_file, size_t *call_
 	tree_err_t err = T_NO_ERR;
 	
 	int par_is_open = 0;
-	int f_par_is_open = 0;
 
-	fprintf(tex_file, "{");
-
-	fprintf(tex_file, "{");
 	if(node->left)
 	{
-		// if((node->op.type == OP_ARIFM && (node->op.val.arifm == AR_MUL) &&
-		//    node->left->op.type == OP_ARIFM	&& node->left->op.val.arifm != AR_MUL && node->left->op.val.arifm != AR_DIV
-		//    && node->left->op.val.arifm != AR_POW)
-		//    ||
-		//    (node->op.type == OP_ARIFM && (node->op.val.arifm == AR_POW) &&
-		//    node->left->op.type == OP_ARIFM)
-		//    ||
-		//    node->left->op.type == OP_ELFUNC)
+		putc('{', tex_file);
+
 		if(NeedPar(node, node->left))
 		{
 			fprintf(tex_file, "\\left(");
@@ -331,30 +321,32 @@ static tree_err_t PrintTexNode(const node_t *node, FILE *tex_file, size_t *call_
 		}
 
 		err = PrintTexNode(node->left, tex_file, call_count);
+	
+		if(par_is_open)
+		{
+			fprintf(tex_file, "\\right)");
+			par_is_open = 0;
+		}
+		
+		putc('}', tex_file);
 	}
 	
-	if(par_is_open)
-	{
-		fprintf(tex_file, "\\right)");
-		par_is_open = 0;
-	}
-	fprintf(tex_file, "}");
+	/*----------------------------------------*/
 	
-
+	if(node->op.type != OP_ARIFM)
+		putc('{', tex_file);
+	
 	PrintNodeDataTex(node, tex_file);
-	if(node->op.type == OP_ELFUNC)
-	{
-		fprintf(tex_file, "\\left(");
-		f_par_is_open = 1;
-	}
+	
+	if(node->op.type != OP_ARIFM)
+		putc('}', tex_file);
+	
+	/*----------------------------------------*/
 
-	fprintf(tex_file, "{");
 	if(node->right)
 	{
-		// if(node->op.type == OP_ARIFM && node->op.val.arifm == AR_MUL &&
-		//    node->right->op.type == OP_ARIFM	&& (node->right->op.val.arifm == AR_ADD || node->right->op.val.arifm == AR_SUB)
-		//    &&
-		//    node->right->op.type != OP_ELFUNC)
+		putc('{', tex_file);
+		
 		if(NeedPar(node, node->right))
 		{
 			fprintf(tex_file, "\\left(");
@@ -365,24 +357,17 @@ static tree_err_t PrintTexNode(const node_t *node, FILE *tex_file, size_t *call_
 			PrintTexNode(node->right, tex_file, call_count);
 		else
 			err = PrintTexNode(node->right, tex_file, call_count);
-	}
 	
 	
-	if(par_is_open)
-	{
-		fprintf(tex_file, "\\right)");
-		par_is_open = 0;
-	}
-
-	fprintf(tex_file, "}");
+		if(par_is_open)
+		{
+			fprintf(tex_file, "\\right)");
+			par_is_open = 0;
+		}
 	
-	if(f_par_is_open)
-	{
-		fprintf(tex_file, "\\right)");
-		f_par_is_open = 0;
+		putc('}', tex_file);
 	}
 
-	fprintf(tex_file, "}");
 	return err;
 }
 
@@ -414,10 +399,7 @@ tree_err_t TreeDumpHTML(const node_t *node, const char *dot_file_path, const cha
     snprintf(system_msg, 100, "dot %s -Tsvg -o %s/%lu.svg\n", dot_file_path, img_dir_path, call_count);
     //printf("sys_msg = {%s}\n", system_msg);
     if(system(system_msg))
-	{
-		printf("'system' error\n");
 		return T_FILE_NULLPTR;
-	}
 
 	fprintf(html_file, "<pre>\n\t<h2>%s</h2>\n", caption);
 
@@ -433,12 +415,12 @@ tree_err_t TreeDumpHTML(const node_t *node, const char *dot_file_path, const cha
 
 tree_err_t TreeDumpTEX(const node_t *tree, FILE *tex_file, const char *cap)
 {
-	fprintf(tex_file, "\\begin{equation}\n%s", cap);
+	fprintf(tex_file, "\n\\begin{equation*}\n%s", cap);
 	
 	size_t call_count = 0;
 	tree_err_t err = PrintTexNode(tree, tex_file, &call_count);
 
-	fprintf(tex_file, "\n\\end{equation}\\vspace{1cm}\n");
+	fprintf(tex_file, "\n\\end{equation*}\\vspace{1cm}\n");
 	return err;
 }
 
@@ -486,53 +468,25 @@ int CloseTEX(FILE *tex_file)
 	return fclose(tex_file);
 }
 
-
-
-/*
-tree_err_t PrintTree(node_t *node, FILE *dump_file, const traversal_type_t traversal_type)
+int BuildTEX(const char *tex_file_name)
 {
-    static size_t call_count = 0;
-    
-    if(call_count++ > MAX_REC_DEPTH)
-        return T_LOOP;
+	const char *comp_name = "pdflatex ";
+	const char *output_dir = " > /dev/null";
 
-    if (node == NULL)
-        return T_NULLPTR;
-    
-    if(dump_file == NULL)
-        return T_FILE_NULLPTR;
-    
-    if(node->parent == NULL)
-        return T_PARENT_NULLPTR;
+	if(tex_file_name == NULL)
+	{
+		print_err_msg("name nullptr");
+		return 1;
+	}
 
-    tree_err_t err = T_NO_ERR;
+	size_t sys_msg_len = strlen(tex_file_name) + strlen(comp_name) + strlen(output_dir);
 
-    putc('(', dump_file);
-    
-    if(traversal_type == TT_PREORDER)
-		PrintNodeData(node, dump_file);
+	char *sys_msg = (char *)calloc(sys_msg_len + 1, sizeof(char));
+	assert(sys_msg);
 
-	if(node->left)
-        err = PrintTree(node->left, dump_file, traversal_type);
-	else
-		fprintf(dump_file, "(nil)");
-
-	if(traversal_type == TT_INORDER)
-        PrintNodeData(node, dump_file);
-    
-    TREE_OK_OR_LEAVE(err);
-    
-    if(node->right)
-        err = PrintTree(node->right, dump_file, traversal_type);
-	else
-		fprintf(dump_file, "(nil)");
-
-    if(traversal_type == TT_POSTORDER)
-        PrintNodeData(node, dump_file);
-
-    putc(')', dump_file);
-
-    return err;
+	snprintf(sys_msg, sys_msg_len + 1, "%s%s%s", comp_name, tex_file_name, output_dir);
+	int status = system(sys_msg);
+	
+	free(sys_msg);
+	return status;
 }
-*/
-
