@@ -19,7 +19,7 @@ static size_t _FoldConst(node_t *tree, size_t *call_count)
 		n_fold += _FoldConst(tree->right, call_count);
 
 		calc = Calc(tree, NULL);
-		if(!isnan(calc))
+		if(!isnan(calc) && !isinf(calc))
 		{
 			n_fold++;
 			tree->op.type = OP_NUM;

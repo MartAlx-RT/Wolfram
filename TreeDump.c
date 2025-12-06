@@ -299,8 +299,8 @@ static tree_err_t PrintTexNode(const node_t *node, FILE *tex_file, size_t *call_
 	if(tex_file == NULL)
 		return T_FILE_NULLPTR;
 	
-	if(node->parent == NULL)
-		return T_PARENT_NULLPTR;
+	// if(node->parent == NULL)
+	// 	return T_PARENT_NULLPTR;
 
 	if((*call_count)++ > MAX_REC_DEPTH)
 		return T_LOOP;

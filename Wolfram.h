@@ -129,7 +129,14 @@ typedef struct frac_t
 	size_t denomer;
 } frac_t;
 
-static const size_t MAX_REC_DEPTH = 100000;
+typedef enum mode_t
+{
+	MD_NOTHING_DO,
+	MD_TAKE_DERIV,
+	MD_TAYLOR,
+} mode_t;
+
+static const size_t MAX_REC_DEPTH = (size_t)(-1);
 
 static const double EPS = 1e-5;
 
@@ -172,3 +179,7 @@ int FracApprox(double x, frac_t *frac);
 /* comparing double functions */
 int Feq(const double val1, const double val2, double prec);
 int NodeNumEqTo(const double ref_num, const node_t *node);
+
+/* Taylor */
+int Taylor(const node_t *tree, const double ex_point, const char ex_var, double var_val[], const size_t ex_pow, FILE *tex_file);
+int Start(int argc, char *argv[]);
