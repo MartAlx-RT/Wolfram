@@ -333,13 +333,13 @@ static tree_err_t PrintTexNode(const node_t *node, FILE *tex_file, size_t *call_
 	
 	/*----------------------------------------*/
 	
-	if(node->op.type != OP_ARIFM)
-		putc('{', tex_file);
+	// if(node->op.type != OP_ARIFM)
+	// 	putc('{', tex_file);
 	
 	PrintNodeDataTex(node, tex_file);
 	
-	if(node->op.type != OP_ARIFM)
-		putc('}', tex_file);
+	// if(node->op.type != OP_ARIFM)
+	// 	putc('}', tex_file);
 	
 	/*----------------------------------------*/
 
@@ -415,12 +415,12 @@ tree_err_t TreeDumpHTML(const node_t *node, const char *dot_file_path, const cha
 
 tree_err_t TreeDumpTEX(const node_t *tree, FILE *tex_file, const char *cap)
 {
-	fprintf(tex_file, "\n\\begin{equation*}\n%s", cap);
+	fprintf(tex_file, "\n\\begin{equation*}\n%s{", cap);
 	
 	size_t call_count = 0;
 	tree_err_t err = PrintTexNode(tree, tex_file, &call_count);
 
-	fprintf(tex_file, "\n\\end{equation*}\\vspace{1cm}\n");
+	fprintf(tex_file, "}\n\\end{equation*}\\vspace{1cm}\n");
 	return err;
 }
 

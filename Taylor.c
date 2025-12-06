@@ -69,7 +69,7 @@ int Taylor(const node_t *tree, const double ex_point, const char d_var, double v
 			break;
 		}
 	}
-	fprintf(tex_file, "+o\\left((%c-%lg)^%lu\\right), %c\\rightarrow %lg\n\\end{equation*}\n", d_var, ex_point, ex_pow, d_var, ex_point);
+	fprintf(tex_file, "+o\\left((%c-%lg)^{%lu}\\right), %c\\rightarrow %lg\n\\end{equation*}\n", d_var, ex_point, ex_pow, d_var, ex_point);
 
 	
 	var_val[d_var] = old_ex_var_val;

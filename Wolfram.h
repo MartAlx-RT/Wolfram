@@ -138,7 +138,7 @@ typedef enum mode_t
 
 static const size_t MAX_REC_DEPTH = (size_t)(-1);
 
-static const double EPS = 1e-5;
+static const double EPS = 1e-6;
 
 /*-----------------------------------------------*/
 

@@ -164,7 +164,7 @@ exit:
 		fclose(in_file);
 	free(tex_file_name);
 	free(in_file_name);
-	TreeDestroy(tree);
+	TreeDestroy(tree); //TODO 
 
 	return 1;
 	
