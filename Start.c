@@ -1,17 +1,22 @@
 #include "Wolfram.h"
 
-static int Deriv(FILE* tex_file, const node_t *tree, const size_t deriv_ord, const char d_var)
+static int Deriv(FILE* tex_file, const node_t *tree, const size_t deriv_ord, double var_val[], const char d_var)
 {
 	assert(tree);
 	assert(tex_file);
+	assert(var_val);
 
 	node_t *new_deriv = NULL, *deriv = TakeDeriv(tree, d_var);
 
+	char tex_cap[50] = "";
+	snprintf(tex_cap, 50, "\\frac{\\partial f}{\\partial %c}=", d_var);
+
 	for (size_t i = 0; ; i++)
 	{
-		while(FoldConst(deriv) || FoldNeutral(deriv));
-		
-		if(TreeDumpTEX(deriv, tex_file, ""))
+		//TreeDumpTEX(deriv, tex_file, "");
+		while(FoldConst(deriv, var_val, d_var) || FoldNeutral(deriv));
+
+		if(TreeDumpTEX(deriv, tex_file, tex_cap))
 		{
 			print_err_msg("dump errors occured");
 			return 1;
@@ -28,6 +33,8 @@ static int Deriv(FILE* tex_file, const node_t *tree, const size_t deriv_ord, con
 			TreeDestroy(deriv);
 			break;
 		}
+		
+		snprintf(tex_cap, 50, "\\frac{\\partial^{%lu} f}{\\partial^{%lu} %c}=", i + 2, i + 2, d_var);
 	}
 
 	return 0;
@@ -42,9 +49,18 @@ int Start(int argc, char *argv[])
 	size_t taylor_ord = 0;
 	size_t deriv_ord = 1;
 	mode_t mode = MD_NOTHING_DO;
+	
 	double var_val[(unsigned char)-1] = {};
+	for (size_t i = 0; i < sizeof(var_val) / sizeof(double); i++)
+		var_val[i] = NAN;
+
 	char d_var = 'x';
 	double ex_point = 0;
+	node_t *tree = NULL;
+	int need_plot = 0;
+	double plot_from = 0, plot_to = 0;
+	size_t n_points = 10; /* default */
+	int status = 0;
 
 	for (int i = 1; i < argc; i++)
 	{
@@ -68,17 +84,22 @@ int Start(int argc, char *argv[])
 			sscanf(argv[i] + 2, "%lu", &deriv_ord);
 			mode = MD_TAKE_DERIV;
 		}
-		else if(strcmp(argv[i], "-p") == 0)
+		else if(strcmp(argv[i], "--par") == 0)
 		{
 			while(++i < argc && isalpha(argv[i][0]))
 			{
 				if(argv[i][1] != '=')
 					continue;
 
-				sscanf(argv[i] + 2, "%lg", &(var_val[argv[i][0]]));
+				sscanf(argv[i] + 2, "%lg", &(var_val[(int)argv[i][0]]));
 			}
 
 			i--;
+		}
+		else if(strncmp(argv[i], "--plot=", 7) == 0)
+		{
+			if(sscanf(argv[i], "--plot=%lf-%lf,%lu", &plot_from, &plot_to, &n_points) >= 2)
+				need_plot = 1;
 		}
 		else if(strncmp(argv[i], "-v", 2) == 0)
 		{
@@ -92,8 +113,10 @@ int Start(int argc, char *argv[])
 					colorize("-i <filename>\t\t", _BOLD_ _CYAN_) colorize("input file name (default: stdin stream)\n", _BOLD_ _MAGENTA_)
 					colorize("-t<ord>p<pnt>\t\t", _BOLD_ _CYAN_) colorize("taylor expansion to order ord at pnt point\n", _BOLD_ _MAGENTA_)
 					colorize("-d<ord>\t\t\t", _BOLD_ _CYAN_) colorize("ord -order derivative\n", _BOLD_ _MAGENTA_)
-					colorize("-p <x=5 A=7 ...>\t", _BOLD_ _CYAN_) colorize("parameters value\n", _BOLD_ _MAGENTA_)
-					colorize("-v<v>\t\t\t", _BOLD_ _CYAN_) colorize("diff variable v\n", _BOLD_ _MAGENTA_));
+					colorize("--par <x=5 A=7 ...>\t", _BOLD_ _CYAN_) colorize("parameters value\n", _BOLD_ _MAGENTA_)
+					colorize("-v<v>\t\t\t", _BOLD_ _CYAN_) colorize("diff variable v\n", _BOLD_ _MAGENTA_)
+					colorize("--plot=i1-i2,n\t\t", _BOLD_ _CYAN_) colorize("draw plot in interval [i1, i2] with n points\n", _BOLD_ _MAGENTA_));
+			status = 1;
 			goto exit;
 		}
 	}
@@ -111,36 +134,59 @@ int Start(int argc, char *argv[])
 		if(in_file == NULL)
 		{
 			print_err_msg("input cannot be open");
+			status = 1;
 			goto exit;
 		}
 	}
 
-	node_t *tree = ReadInfix(in_file);
+	tree = ReadInfix(in_file);
 	if(tree == NULL)
 	{
 		print_err_msg("wrong input");
+		status = 1;
 		goto exit;
 	}
 
 	tex_file = OpenTEX(tex_file_name);
 	if(tex_file == NULL)
+	{
+		status = 1;
 		goto exit;
+	}
 	/*------------------------------------------------*/
 
 	fprintf(tex_file, "Вы ввели\\vspace{0.5cm}\n");
 	char f_str[6]=""; /* 'f(x)=' */
 	snprintf(f_str, 6, "f(%c)=", d_var);
 	TreeDumpTEX(tree, tex_file, f_str);
+	
+	if(need_plot)
+	{
+		fprintf(tex_file, "График функции:\\vspace{0.5cm}\n");
+		if (DrawPlot(tree, d_var, var_val, plot_from, plot_to, n_points))
+		{
+			status = 1;
+			goto exit;
+		}
+
+		PlacePlotTEX(tex_file);
+	}
 
 	switch(mode)
 	{
 	case MD_TAKE_DERIV:
-		if(Deriv(tex_file, tree, deriv_ord, d_var))
+		if(Deriv(tex_file, tree, deriv_ord, var_val, d_var))
+		{
+			status = 1;
 			goto exit;
+		}
 		break;
 	case MD_TAYLOR:
 		if(Taylor(tree, ex_point, d_var, var_val, taylor_ord, tex_file))
+		{
+			status = 1;
 			goto exit;
+		}
 		break;
 	case MD_NOTHING_DO:
 	default:
@@ -149,23 +195,15 @@ int Start(int argc, char *argv[])
 
 	/*------------------------------------------------*/
 
+exit:
 	CloseTEX(tex_file);
-	if(in_file)
+	if (BuildTEX(tex_file_name))
+		status = 1;
+	if (in_file)
 		fclose(in_file);
 	free(tex_file_name);
 	free(in_file_name);
 	TreeDestroy(tree);
 
-	return 0;
-
-exit:
-	CloseTEX(tex_file);
-	if(in_file)
-		fclose(in_file);
-	free(tex_file_name);
-	free(in_file_name);
-	TreeDestroy(tree); //TODO 
-
-	return 1;
-	
+	return status;	
 }

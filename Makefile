@@ -7,8 +7,8 @@ CC = gcc
 
 all: main
 
-main: TreeDump.o main.o Input.o Derivative.o Fcomp.o Calculator.o Tree.o Optimizer.o Taylor.o Start.o
-	$(CC) $(linker_flags) TreeDump.o main.o Input.o Derivative.o Fcomp.o Calculator.o Tree.o Optimizer.o Taylor.o Start.o -lm
+main: TreeDump.o main.o Input.o Derivative.o Fcomp.o Calculator.o Tree.o Optimizer.o Taylor.o Start.o Plot.o
+	$(CC) $(linker_flags) TreeDump.o main.o Input.o Derivative.o Fcomp.o Calculator.o Tree.o Optimizer.o Taylor.o Start.o Plot.o -lm -o wolfram
 
 TreeDump.o: TreeDump.c
 
@@ -29,6 +29,8 @@ Derivative.o: Derivative.c
 Taylor.o: Taylor.c
 
 Start.o: Start.c
+
+Plot.o: Plot.c
 
 clean:
 	rm *.o

@@ -1,4 +1,6 @@
 #include "Wolfram.h"
+#include "OptypeName.h"
+#include "ElfuncName.h"
 
 static int NeedPar(const node_t *cur, const node_t *son)	/* for correct placement of parenthes */
 {
@@ -442,7 +444,7 @@ FILE *OpenTEX(const char *tex_file_path)
 	assert(tex_file);
 
 	fprintf(tex_file,
-			"\\documentclass[a4paper]{article}\n"
+			"\\documentclass[a1paper, landscape]{article}\n"
 			"\n"
 			"\\usepackage{float}\n"
 			"\\usepackage{multirow}\n"

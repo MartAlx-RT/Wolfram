@@ -1,4 +1,5 @@
 #include "Wolfram.h"
+#include "ElfuncName.h"
 
 #define EXISTS_OR_LEAVE(node) \
 	if (node == NULL)        \
@@ -271,26 +272,6 @@ static node_t *GetT(char **s)
 
 	node_t *new_node = NULL, *arg_node = NULL;
 
-	/*
-	while(isalnum(**s) || **s == '*' || **s == '/' || **s == '(')
-	{
-		if(**s == '/')
-		{
-			(*s)++;
-			SkipSpaces(s);
-			val /= GetP(s);
-		}
-		else
-		{
-			if(**s == '*')
-				(*s)++;
-			
-			SkipSpaces(s);
-			val *= GetP(s);
-		}
-	}
-	*/
-
 	while (isalnum(**s) || **s == '*' || **s == '/' || **s == '(')
 	{
 		if (**s == '/')
@@ -313,7 +294,6 @@ static node_t *GetT(char **s)
 				TreeDestroy(node);
 				return NULL;
 			}
-			// val += GetT(s);
 		}
 		else
 		{
@@ -432,51 +412,12 @@ static node_t *GetN(char **s)
 
 	double val = 0;
 	int off = 0;
-	//char *old_p = *s;
-
-	/*
-	int sign = +1;
-	if(**s == '+' && isdigit((*s)[1]))
-		(*s)++;
-	else if(**s == '-' && isdigit((*s)[1]))
-	{
-		sign = -1;
-		(*s)++;
-	}
-	
-	
-	while(isdigit(**s))
-	{
-		val = 10 * val + (**s - '0');
-		(*s)++;
-	}
-	
-	
-	if(*s == old_p)
-	{
-		printf("getn: se\n");
-		return 0;
-	}
-	*/
 
 	sscanf(*s, "%lf%n", &val, &off);
 	*s += off;
 	
 	if(off == 0)
-	{
-		// if(isalpha(**s) && !isalnum((*s)[1]))
-		// {
-		// 	node_t *new_node = VAR(**s);
-		// 	assert(new_node);
-
-		// 	(*s)++;
-		// 	SkipSpaces(s);
-
-		// 	return new_node;
-		// }
-		
 		return GetF(s);
-	}
 
 	SkipSpaces(s);
 
@@ -488,20 +429,10 @@ static node_t *GetF(char **s)
 	assert(s);
 	assert(*s);
 
-	//printf("*s = {%s}\n", *s);
-
 	char *f_name = NULL;
 	int off = 0;
 	sscanf(*s, "%m[A-Za-z]%n", &f_name, &off);
 	assert(f_name);
-
-	// if(f_name == NULL)
-	// {
-	// 	print_err_msg("invalid function name:");
-	// 	print_wrong_s(*s);
-		
-	// 	return NULL;
-	// }
 
 	for (size_t i = 0; i < N_ELFUNC; i++)
 	{
@@ -521,13 +452,8 @@ static node_t *GetF(char **s)
 	}
 
 	free(f_name);
-	
-	// print_err_msg("invalid function name:");
-	// print_wrong_s(*s);
-	
-	return GetV(s);
 
-	/* don't forget to add skipspaces */
+	return GetV(s);
 }
 
 static node_t *GetV(char **s)
@@ -544,26 +470,6 @@ static node_t *GetV(char **s)
 	return new_node;
 }
 
-/*
-int GetF(char **s)
-{
-	assert(s);
-	assert(*s);
-	
-	int sign = +1;
-	if(**s == '+' && isalpha((*s)[1]))
-		(*s)++;
-	else if(**s == '-' && isalpha((*s)[1]))
-	{
-		sign = -1;
-		(*s)++;
-	}
-	
-	...
-	
-}
-*/
-
 node_t *ReadInfix(FILE *in_file)
 {
 	if(in_file == NULL)
@@ -577,8 +483,6 @@ node_t *ReadInfix(FILE *in_file)
 		print_err_msg("read file failed\n");
 		return NULL;
 	}
-
-	//size_t s_len = strlen(s);
 	
 	s = (char *)realloc(s, (2 + (size_t)s_len) * sizeof(char));
 	assert(s);
@@ -595,3 +499,4 @@ node_t *ReadInfix(FILE *in_file)
 
 #include "DSLundef.h"
 #undef EXISTS_OR_LEAVE
+

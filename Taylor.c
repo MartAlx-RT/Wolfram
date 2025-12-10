@@ -5,7 +5,7 @@ int Taylor(const node_t *tree, const double ex_point, const char d_var, double v
 	if(tree == NULL || var_val == NULL || tex_file == NULL)
 		return 1;
 
-	var_val[d_var] = ex_point;
+	var_val[(int)d_var] = ex_point;
 	double old_ex_var_val = var_val[(size_t)d_var];
 	double coeff = Calc(tree, var_val);
 	double fact = 1;
@@ -19,9 +19,9 @@ int Taylor(const node_t *tree, const double ex_point, const char d_var, double v
 	
 	for (size_t i = 1; ; i++)
 	{
-		fprintf(stderr, "hello\n");
+		//fprintf(stderr, "hello\n");
 		/* take derivative */
-		while(FoldConst(deriv) || FoldNeutral(deriv));
+		while(FoldConst(deriv, var_val, d_var) || FoldNeutral(deriv));
 		
 		
 		/*-------------------*/
@@ -69,10 +69,12 @@ int Taylor(const node_t *tree, const double ex_point, const char d_var, double v
 			break;
 		}
 	}
-	fprintf(tex_file, "+o\\left((%c-%lg)^{%lu}\\right), %c\\rightarrow %lg\n\\end{equation*}\n", d_var, ex_point, ex_pow, d_var, ex_point);
+	if(Feq(ex_point, 0, EPS))
+		fprintf(tex_file, "+o\\left(%c^{%lu}\\right), %c\\rightarrow 0\n\\end{equation*}\n", d_var, ex_pow, d_var);
+	else
+		fprintf(tex_file, "+o\\left((%c-%lg)^{%lu}\\right), %c\\rightarrow %lg\n\\end{equation*}\n", d_var, ex_point, ex_pow, d_var, ex_point);
 
-	
-	var_val[d_var] = old_ex_var_val;
+	var_val[(int)d_var] = old_ex_var_val;
 
 	return 0;
 }

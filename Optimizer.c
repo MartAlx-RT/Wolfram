@@ -1,24 +1,26 @@
 #include "Wolfram.h"
 
-static size_t _FoldConst(node_t *tree, size_t *call_count)
+static size_t _FoldConst(node_t *tree, size_t *call_count, double var_val[], const char d_var)
 {
 	assert(call_count);
 
-	if(tree == NULL || (*call_count)++ > MAX_REC_DEPTH)
+	if(tree == NULL || var_val == NULL || (*call_count)++ > MAX_REC_DEPTH)
 		return 0;
 
 	double calc = 0;
 	size_t n_fold = 0;
 
-	switch(tree->op.type)
+	switch (tree->op.type)
 	{
 	case OP_NUM:
 		return 0;
 	case OP_ARIFM:
-		n_fold += _FoldConst(tree->left, call_count);
-		n_fold += _FoldConst(tree->right, call_count);
+	case OP_ELFUNC:
+	case OP_VAR:
+		n_fold += _FoldConst(tree->left, call_count, var_val, d_var);
+		n_fold += _FoldConst(tree->right, call_count, var_val, d_var);
 
-		calc = Calc(tree, NULL);
+		calc = Calc(tree, var_val);
 		if(!isnan(calc) && !isinf(calc))
 		{
 			n_fold++;
@@ -31,18 +33,16 @@ static size_t _FoldConst(node_t *tree, size_t *call_count)
 		}
 		
 		break;
-	case OP_ELFUNC:
-		n_fold += _FoldConst(tree->right, call_count);
+		// n_fold += _FoldConst(tree->right, call_count);
 		
-		break;
+		// break;
 	
 	
-	case OP_VAR:
 	case N_OP:
 	default:
 		break;
 	}
-
+	
 	return n_fold;
 }
 
@@ -173,10 +173,19 @@ static size_t _FoldNeutral(node_t *tree, size_t *call_count)
 }
 
 /* entrance to recursion */
-size_t FoldConst(node_t *tree)
+size_t FoldConst(node_t *tree, double var_val[], const char d_var)
 {
-	size_t call_count = 0;
-	return _FoldConst(tree, &call_count);
+	if(var_val == NULL)
+		return 0;
+	
+	size_t call_count = 0, n_fold = 0;
+	const double old_dvar = var_val[(int)d_var];
+	var_val[(int)d_var] = NAN;
+
+	n_fold =  _FoldConst(tree, &call_count, var_val, d_var);
+	var_val[(int)d_var] = old_dvar;
+
+	return n_fold;
 }
 
 size_t FoldNeutral(node_t *tree)

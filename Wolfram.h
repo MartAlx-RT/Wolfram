@@ -27,14 +27,6 @@ typedef enum op_type_t
 	N_OP
 } op_type_t;
 
-static const char *OP_TYPE_NAME[] =
-	{
-		"arifmetic",
-		"elementary func",
-		"variable",
-		"number",
-	};
-
 typedef enum arifm_t
 {
 	AR_ADD = '+',
@@ -70,16 +62,6 @@ typedef enum elfunc_t
 	//F_ACOTH,
 	N_ELFUNC
 } elfunc_t;
-
-/* it necessary to sort same-suffix name! */
-static const char *ELFUNC_NAME[] =
-	{
-		"ln",
-		"sin", "cos", "tg",
-		"sh", "ch", "th",
-		"arcsin", "arccos", "arctg",
-		"arsh", "arch", "arth",
-	};
 
 typedef union op_val_t
 {
@@ -170,7 +152,7 @@ node_t *TakeDeriv(const node_t *node, const char d_var);
 
 /* optimizer */
 size_t FoldNeutral(node_t *tree);
-size_t FoldConst(node_t *tree);
+size_t FoldConst(node_t *tree, double var_val[], const char d_var);
 
 /* calculator */
 double Calc(const node_t *tree, const double var_val[]);
@@ -183,3 +165,8 @@ int NodeNumEqTo(const double ref_num, const node_t *node);
 /* Taylor */
 int Taylor(const node_t *tree, const double ex_point, const char ex_var, double var_val[], const size_t ex_pow, FILE *tex_file);
 int Start(int argc, char *argv[]);
+
+/* Plot */
+int DrawPlot(const node_t *tree, const char var, double var_val[], double from, double to, const size_t n_points);
+void PlacePlotTEX(FILE *tex);
+
