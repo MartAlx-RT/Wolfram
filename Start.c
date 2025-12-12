@@ -146,7 +146,7 @@ int Start(int argc, char *argv[])
 		goto exit;
 	}
 
-	TreeDumpHTML(tree, "f.dot", "./Img", "f.html", "check");
+	//TreeDumpHTML(tree, "f.dot", "./Img", "f.html", "check");
 
 	tex_file = OpenTEX(tex_file_name);
 	if(tex_file == NULL)
@@ -199,7 +199,10 @@ int Start(int argc, char *argv[])
 exit:
 	CloseTEX(tex_file);
 	if (BuildTEX(tex_file_name))
+	{
+		print_err_msg("Build tex failed");
 		status = 1;
+	}
 	if (in_file)
 		fclose(in_file);
 	free(tex_file_name);

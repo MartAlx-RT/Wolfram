@@ -94,7 +94,7 @@ void TieLeftToParent(node_t *node)
 
 	node->op = node->left->op;
 
-	if(node->parent == node || node->parent == NULL)
+	if(node->parent == NULL)
 	{
 		node_t *new_left = node->left->left;
 		node_t *new_right = node->left->right;
@@ -142,7 +142,7 @@ void TieRightToParent(node_t *node)
 	
 	node->op = node->right->op;
 
-	if(node->parent == node || node->parent == NULL)
+	if(node->parent == NULL)
 	{
 		node_t *new_left = node->right->left;
 		node_t *new_right = node->right->right;

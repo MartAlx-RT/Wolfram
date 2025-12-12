@@ -374,11 +374,24 @@ static node_t *GetP(char **s)
 	int sgn = +1;
 
 	if(**s == '+')
+	{
 		(*s)++;
+		return GetP(s);
+	}
 	else if(**s == '-')
 	{
 		sgn = -1;
 		(*s)++;
+
+		node_t *node = GetP(s);
+		if(node)
+			return MIN_(node);
+		else
+		{
+			print_err_msg("syntax error");
+			print_wrong_s(*s);
+			return NULL;
+		}
 	}
 
 	node_t *node = NULL;

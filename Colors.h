@@ -20,5 +20,5 @@ col expr _RESET_COLORS_
 	fprintf(stderr, "%s: " colorize(msg, _BOLD_ _RED_) "\n", __func__)
 
 #define print_wrong_s(s) \
-	fprintf(stderr, colorize("-->", _BOLD_ _YELLOW_) "%s\n", s)
+	fprintf(stderr, colorize("-->", _BOLD_ _YELLOW_) "%10s\n", s)
 	
