@@ -8,12 +8,11 @@ static int Deriv(FILE* tex_file, const node_t *tree, const size_t deriv_ord, dou
 
 	node_t *new_deriv = NULL, *deriv = TakeDeriv(tree, d_var);
 
-	char tex_cap[50] = "";
-	snprintf(tex_cap, 50, "\\frac{\\partial f}{\\partial %c}=", d_var);
+	char tex_cap[100] = "";
+	snprintf(tex_cap, 100, "\\frac{\\partial f}{\\partial %c}=", d_var);
 
 	for (size_t i = 0; ; i++)
 	{
-		//TreeDumpTEX(deriv, tex_file, "");
 		while(FoldConst(deriv, var_val, d_var) || FoldNeutral(deriv));
 
 		if(TreeDumpTEX(deriv, tex_file, tex_cap))
@@ -34,7 +33,7 @@ static int Deriv(FILE* tex_file, const node_t *tree, const size_t deriv_ord, dou
 			break;
 		}
 		
-		snprintf(tex_cap, 50, "\\frac{\\partial^{%lu} f}{\\partial^{%lu} %c}=", i + 2, i + 2, d_var);
+		snprintf(tex_cap, 100, "\\frac{\\partial^{%lu} f}{{\\partial %c}^{%lu}}=", i + 2, d_var, i + 2);
 	}
 
 	return 0;
@@ -146,6 +145,8 @@ int Start(int argc, char *argv[])
 		status = 1;
 		goto exit;
 	}
+
+	TreeDumpHTML(tree, "f.dot", "./Img", "f.html", "check");
 
 	tex_file = OpenTEX(tex_file_name);
 	if(tex_file == NULL)

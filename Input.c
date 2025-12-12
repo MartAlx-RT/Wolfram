@@ -186,8 +186,14 @@ static node_t *GetG(char **s)
 	assert(s);
 	assert(*s);
 
+	SkipSpaces(s);
+
 	node_t *node = GetE(s);
-	EXISTS_OR_LEAVE(node);
+	if(node == NULL)
+	{
+		print_err_msg("wrong expression");
+		return NULL;
+	}
 
 	assert(*s);
 	
@@ -365,21 +371,24 @@ static node_t *GetP(char **s)
 	assert(s);
 	assert(*s);
 
-	int sign = +1;
-	if(**s == '+' && (*s)[1] == '(')
+	int sgn = +1;
+
+	if(**s == '+')
 		(*s)++;
-	else if(**s == '-' && (*s)[1] == '(')
+	else if(**s == '-')
 	{
-		sign = -1;
+		sgn = -1;
 		(*s)++;
 	}
+
+	node_t *node = NULL;
 
 	if(**s == '(')
 	{
 		(*s)++;
 		SkipSpaces(s);
 		
-		node_t *node = GetE(s);
+		node = GetE(s);
 		EXISTS_OR_LEAVE(node);
 		assert(*s);
 
@@ -395,14 +404,23 @@ static node_t *GetP(char **s)
 		(*s)++;
 		SkipSpaces(s);
 		
-		if(sign == -1)
-			node = MUL_(NUM(-1), node);
+		if(sgn == -1 && node)
+			return MIN_(node);
 
-		assert(node);
 		return node;
 	}
-	else
-		return GetN(s);
+
+	if(sgn == -1)
+	{
+		node = GetN(s);
+		
+		if(node)
+			return MIN_(node);
+
+		return NULL;
+	}
+
+	return GetN(s);
 }
 
 static node_t *GetN(char **s)
@@ -431,7 +449,9 @@ static node_t *GetF(char **s)
 
 	char *f_name = NULL;
 	int off = 0;
-	sscanf(*s, "%m[A-Za-z]%n", &f_name, &off);
+	if(sscanf(*s, "%m[A-Za-z]%n", &f_name, &off) <= 0)
+		return NULL;
+	
 	assert(f_name);
 
 	for (size_t i = 0; i < N_ELFUNC; i++)

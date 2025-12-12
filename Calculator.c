@@ -20,6 +20,8 @@ static double _Calc(const node_t *tree, const double var_val[], size_t *call_cou
 			return _Calc(tree->left, var_val, call_count) * _Calc(tree->right, var_val, call_count);
 		case AR_POW:
 			return pow(_Calc(tree->left, var_val, call_count), _Calc(tree->right, var_val, call_count));
+		case AR_MIN:
+			return (-1) * _Calc(tree->right, var_val, call_count);
 		case AR_SUB:
 			return _Calc(tree->left, var_val, call_count) - _Calc(tree->right, var_val, call_count);
 		default:
@@ -63,7 +65,7 @@ static double _Calc(const node_t *tree, const double var_val[], size_t *call_cou
 		return tree->op.val.num;
 	case OP_VAR:
 		if(var_val)
-			return var_val[tree->op.val.var];
+			return var_val[(int)tree->op.val.var];
 		return NAN;
 	
 	case N_OP:

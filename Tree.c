@@ -89,7 +89,7 @@ void TieLeftToParent(node_t *node)
 {
 	assert(node);
 	assert(node->left);
-	assert(node->right);
+	//assert(node->right);
 	//assert(node->parent);
 
 	node->op = node->left->op;
@@ -136,7 +136,7 @@ void TieLeftToParent(node_t *node)
 void TieRightToParent(node_t *node)
 {
 	assert(node);
-	assert(node->left);
+	//assert(node->left);
 	assert(node->right);
 	//assert(node->parent);
 	

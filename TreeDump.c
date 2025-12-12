@@ -34,6 +34,7 @@ static int NeedPar(const node_t *cur, const node_t *son)	/* for correct placemen
 				{
 				case AR_ADD:
 				case AR_SUB:
+				case AR_MIN:
 					return 1;
 				case AR_MUL:
 				case AR_POW:
@@ -60,6 +61,7 @@ static int NeedPar(const node_t *cur, const node_t *son)	/* for correct placemen
 				{
 				case AR_ADD:
 				case AR_SUB:
+				case AR_MIN:
 					if(son == cur->right)
 						return 1;
 					return 0;
@@ -92,7 +94,12 @@ static int NeedPar(const node_t *cur, const node_t *son)	/* for correct placemen
 				return 1;
 			}
 			break;
-		
+		case AR_MIN:
+			if(son->op.type == OP_ARIFM && 
+			  (son->op.val.arifm == AR_ADD || son->op.val.arifm == AR_SUB || son->op.val.arifm == AR_MIN))
+				return 1;
+			return 0;
+			break;
 		default:
 			print_err_msg("op.val.arifm is out of range arifm_t");
 			break;
@@ -118,7 +125,7 @@ static void PrintNodeData(const node_t *node, FILE *out_file)
 	case OP_ARIFM:
 		fprintf(out_file, "%c", (char)node->op.val.arifm);
 		break;
-	
+
 	case OP_ELFUNC:
 		if(node->op.val.elfunc < N_ELFUNC)
 			fprintf(out_file, "%s", ELFUNC_NAME[node->op.val.elfunc]);
@@ -158,6 +165,7 @@ static void PrintNodeDataTex(const node_t *node, FILE *out_file)
 			fprintf(out_file, "+");
 			break;
 		case AR_SUB:
+		case AR_MIN:
 			fprintf(out_file, "-");
 			break;
 		case AR_MUL:

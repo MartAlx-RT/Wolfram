@@ -7,6 +7,7 @@
 #undef POW_
 #undef NUM
 #undef VAR
+#undef MIN_
 
 #undef LN_
 

@@ -16,6 +16,7 @@
     if (err && err != T_PARENT_NULLPTR) \
         return err
 
+#define ISMIN(node) (node && node->op.type == OP_ARIFM && node->op.val.arifm == AR_MIN)
 
 typedef enum op_type_t
 {
@@ -34,6 +35,7 @@ typedef enum arifm_t
 	AR_MUL = '*',
 	AR_DIV = '/',
 	AR_POW = '^',
+	AR_MIN = '_'
 
 } arifm_t;
 
